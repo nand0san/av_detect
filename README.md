@@ -8,7 +8,7 @@ Windows as the operating system.
 # Compilation
 Open a terminal or command prompt.
 Navigate to the directory where the main.cpp file is located.
-Compile the program using a C++11 or later compatible compiler. For example, to compile with g++, execute the following command:
+Compile the program using CLion, also a C++11 or later compatible compiler. For example, to compile with g++, execute the following command:
 ```
 g++ -std=c++11 -o av_detect main.cpp
 ```
