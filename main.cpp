@@ -73,7 +73,7 @@ bool isSecuritySoftwareRunning() {
             {"trapsd.exe",              {"Palo Alto Networks Cortex XDR",    "XDR"}},
             {"truecrypt.exe",           {"TrueCrypt",                        "Encryption"}},
             {"vsserv.exe",              {"Bitdefender Total Security",       "AV"}},
-            {"webroot anywhere",        {"wrsa.exe",                         "AV"}},
+            {"wrsa.exe",                {"Webroot Anywhere",                         "AV"}},
             {"windefend.exe",           {"Windows Defender",                 "AV"}},
             {"xagt.exe",                {"FireEye HX",                       "Security"}}
     };
