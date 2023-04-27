@@ -63,6 +63,13 @@ The program will display "Security software is running." if any security softwar
 
 ![img.png](img.png)
 
+# Alternative Usage without solely relying on PowerShell
+You can use a PowerShell command to directly interact with the CSV hosted on GitHub, without the need to download the project or compile it.
+
+```
+$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $OutputFile="processes.csv"; Invoke-WebRequest -Uri $Url -OutFile $OutputFile; $ProcessesCSV = Import-Csv -Path $OutputFile; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type; } } }; $FoundProcesses | Format-Table
+```
+
 # How it Works
 The program uses the CreateToolhelp32Snapshot function from the Windows API to obtain a list of all running processes on the system. It then compares the name of each process with a predefined list of known security software processes. If it finds a match, the program considers that security software is running on the system.
 
