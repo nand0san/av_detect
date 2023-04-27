@@ -73,8 +73,8 @@ $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; 
 
 ![img_pwrshll.png](img_pwrshll.png)
 
-### Decteting proxy version
-Not tested on corporate systems yet.
+### Detecting proxy version
+Not yet tested on corporate systems. It detects and uses the system proxy if it exists. It is also fileless.
 ```
 $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $WebRequestSession=New-Object Microsoft.PowerShell.Commands.WebRequestSession; if ($env:HTTP_PROXY -or $env:http_proxy) { $Proxy=$env:HTTP_PROXY -or $env:http_proxy; $WebRequestSession.Proxy=[System.Net.WebRequest]::GetSystemWebProxy(); $WebRequestSession.Proxy.Credentials=[System.Net.CredentialCache]::DefaultCredentials; }; $ProcessesCSV=Invoke-WebRequest -Uri $Url -WebSession $WebRequestSession | ConvertFrom-Csv; $RunningProcesses=Get-Process; $FoundProcesses=@(); foreach ($process in $ProcessesCSV) { $runningProcess=$RunningProcesses|Where-Object {$_.ProcessName -like $process.Process.Replace('.exe','')}; if ($runningProcess) { $FoundProcesses+=[PSCustomObject]@{'Process'=$runningProcess.ProcessName;'Name'=$process.Name;'Type'=$process.Type}; }; }; $FoundProcesses|Format-Table
 ```
