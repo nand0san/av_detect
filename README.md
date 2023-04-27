@@ -63,7 +63,8 @@ The program will display "Security software is running." if any security softwar
 
 ![img.png](img.png)
 
-# Alternative Usage without solely relying on PowerShell
+# Alternative usage using only PowerShell, without using the executable
+
 You can use a PowerShell command to directly interact with the CSV hosted on GitHub, without the need to download the project or compile it.
 
 ```
