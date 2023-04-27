@@ -70,6 +70,7 @@ You can use a PowerShell command to directly interact with the CSV hosted on Git
 ```
 $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type; } } }; $FoundProcesses | Format-Table
 ```
+
 ![img_powershell.png](img_powershell.png)
 
 # How it Works
