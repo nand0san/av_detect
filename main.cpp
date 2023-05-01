@@ -75,7 +75,18 @@ bool isSecuritySoftwareRunning() {
             {"vsserv.exe",              {"Bitdefender Total Security",       "AV"}},
             {"wrsa.exe",                {"Webroot Anywhere",                 "AV"}},
             {"windefend.exe",           {"Windows Defender",                 "AV"}},
-            {"xagt.exe",                {"FireEye HX",                       "Security"}}
+            {"xagt.exe",                {"FireEye HX",                       "Security"}},
+            {"vpnagent.exe",		       {"Cisco AnyConnect Secure Mobility Client","VPN"}},
+            {"macmnsvc.exe", 		   {"McAfee Endpoint Security",				"AV"}},
+            {"masvc.exe", 			   {"McAfee Endpoint Security",     			"AV"}},
+            {"eegoservice.exe", 	       {"McAfee Endpoint Encryption", 				"Encryption"}},
+            {"mfeepehost.exe", 		   {"McAfee Endpoint Encryption", 				"Encryption"}},
+            {"mdecryptservice.exe",     {"McAfee Endpoint Encryption", 				"Encryption"}},
+            {"pangps.exe", 			   {"Palo Alto Networks GlobalProtect",		"VPN"}},
+            {"mssense.exe", 		       {"Microsoft Defender ATP (Advanced Threat Protection)",	"Security"}},
+            {"acumbrellaagent.exe",     {"Cisco Umbrella Roaming Security", 					"Security"}},
+            {"aciseagent.exe", 		   {"Cisco Umbrella Roaming Security", 					"Security"}},
+            {"mfemactl.exe", 		   {"McAfee Endpoint Security Firewall", 					"Firewall"}}
     };
 
     bool found = false;

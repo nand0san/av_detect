@@ -22,6 +22,8 @@ This will create an executable file named av_detect.exe in the same directory.
 - Bitdefender Total Security - AV
 - Check Point Daemon - Security
 - Check Point Firewall - Firewall
+- Cisco AnyConnect Secure Mobility Client - VPN
+- Cisco Umbrella Roaming Security -  Security
 - CrowdStrike Falcon Insight XDR - XDR
 - Cybereason EDR - EDR
 - Cytomic Orion - Security
@@ -35,12 +37,16 @@ This will create an executable file named av_detect.exe in the same directory.
 - Kerio Personal Firewall - Firewall
 - Malwarebytes - AV
 - McAfee DLP Sensor - DLP
+- McAfee Endpoint Encryption -  Encryption
 - McAfee Endpoint Security - AV
+- McAfee Endpoint Security Firewall -  Firewall
 - McAfee Host Intrusion Prevention - HIPS
 - McAfee VirusScan - AV
+- Microsoft Defender ATP (Advanced Threat Protection) -  Security
 - Microsoft Security Essentials - AV
 - Microsoft Sysmon - Security
 - Palo Alto Networks Cortex XDR - XDR
+- Palo Alto Networks GlobalProtect -  VPN
 - Panda Security - AV
 - SentinelOne Singularity XDR - XDR
 - Sophos Endpoint Security - AV
