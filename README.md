@@ -74,16 +74,18 @@ The program will display "Security software is running." if any security softwar
 You can use a PowerShell command to directly interact with the CSV hosted on GitHub, without the need to download the project or compile it.
 
 ```
-$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type; } } }; $FoundProcesses | Format-Table
+$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type; } } }; $FoundProcesses | Format-Table
 ```
 
 ![img_pwrshll.png](img_pwrshll.png)
 
 ### Detecting proxy version
 Not yet tested on corporate systems. It detects and uses the system proxy if it exists. It is also fileless.
+
 ```
 $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $WebRequestSession=New-Object Microsoft.PowerShell.Commands.WebRequestSession; if ($env:HTTP_PROXY -or $env:http_proxy) { $Proxy=$env:HTTP_PROXY -or $env:http_proxy; $WebRequestSession.Proxy=[System.Net.WebRequest]::GetSystemWebProxy(); $WebRequestSession.Proxy.Credentials=[System.Net.CredentialCache]::DefaultCredentials; }; $ProcessesCSV=Invoke-WebRequest -Uri $Url -WebSession $WebRequestSession | ConvertFrom-Csv; $RunningProcesses=Get-Process; $FoundProcesses=@(); foreach ($process in $ProcessesCSV) { $runningProcess=$RunningProcesses|Where-Object {$_.ProcessName -like $process.Process.Replace('.exe','')}; if ($runningProcess) { $FoundProcesses+=[PSCustomObject]@{'Process'=$runningProcess.ProcessName;'Name'=$process.Name;'Type'=$process.Type}; }; }; $FoundProcesses|Format-Table
 ```
+
 # How it Works
 The program uses the CreateToolhelp32Snapshot function from the Windows API to obtain a list of all running processes on the system. It then compares the name of each process with a predefined list of known security software processes. If it finds a match, the program considers that security software is running on the system.
 
