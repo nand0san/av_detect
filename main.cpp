@@ -86,7 +86,15 @@ bool isSecuritySoftwareRunning() {
             {"mssense.exe", 		       {"Microsoft Defender ATP (Advanced Threat Protection)",	"Security"}},
             {"acumbrellaagent.exe",     {"Cisco Umbrella Roaming Security", 					"Security"}},
             {"aciseagent.exe", 		   {"Cisco Umbrella Roaming Security", 					"Security"}},
-            {"mfemactl.exe", 		   {"McAfee Endpoint Security Firewall", 					"Firewall"}}
+            {"mfemactl.exe", 		   {"McAfee Endpoint Security Firewall", 					"Firewall"}},
+            {"avpui.exe",		       {"Kaspersky",						"AV"}},
+            {"ksde.exe", 		       {"Kaspersky Secure Connection",		"VPN"}},
+            {"ksdeui.exe", 		       {"Kaspersky Secure Connection", 	"VPN"}},
+            {"openvpnserv.exe",         {"OpenVPN", 						"VPN"}},
+            {"sbiesvc.exe", 	           {"Sandboxie", 						"Security"}},
+            {"sysmon64.exe", 	       {"Microsoft Sysmon", 				"Security"}},
+            {"winlogbeat.exe", 	       {"Elastic Winlogbeat", 				"Security"}},
+            {"wireguard.exe", 	       {"WireGuard", 						"VPN"}}
     };
 
     bool found = false;
@@ -113,7 +121,7 @@ bool isSecuritySoftwareRunning() {
         auto it = securitySoftwareProcesses.find(processName);
         if (it != securitySoftwareProcesses.end()) {
             found = true;
-            std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ")" << std::endl;
+            std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ") - Process: " << processName << std::endl;
         }
     } while (Process32Next(hProcessSnap, &pe32));
 
