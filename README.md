@@ -23,31 +23,35 @@ This will create an executable file named av_detect.exe in the same directory.
 - Check Point Daemon - Security
 - Check Point Firewall - Firewall
 - Cisco AnyConnect Secure Mobility Client - VPN
-- Cisco Umbrella Roaming Security -  Security
+- Cisco Umbrella Roaming Security - Security
 - CrowdStrike Falcon Insight XDR - XDR
 - Cybereason EDR - EDR
 - Cytomic Orion - Security
 - DriveSentry - Security
+- Elastic Winlogbeat - Security
 - ESET NOD32 AV - AV
 - FireEye Endpoint Agent - Security
 - FireEye HX - Security
 - FortiEDR - EDR
 - Host Intrusion Prevention System - HIPS
+- Kaspersky Secure Connection - VPN
 - Kaspersky - AV
 - Kerio Personal Firewall - Firewall
 - Malwarebytes - AV
 - McAfee DLP Sensor - DLP
-- McAfee Endpoint Encryption -  Encryption
+- McAfee Endpoint Encryption - Encryption
 - McAfee Endpoint Security - AV
-- McAfee Endpoint Security Firewall -  Firewall
+- McAfee Endpoint Security Firewall - Firewall
 - McAfee Host Intrusion Prevention - HIPS
 - McAfee VirusScan - AV
-- Microsoft Defender ATP (Advanced Threat Protection) -  Security
+- Microsoft Defender ATP (Advanced Threat Protection) - Security
 - Microsoft Security Essentials - AV
 - Microsoft Sysmon - Security
+- OpenVPN - VPN
 - Palo Alto Networks Cortex XDR - XDR
-- Palo Alto Networks GlobalProtect -  VPN
+- Palo Alto Networks GlobalProtect - VPN
 - Panda Security - AV
+- Sandboxie - Security
 - SentinelOne Singularity XDR - XDR
 - Sophos Endpoint Security - AV
 - Symantec DLP Agent - DLP
@@ -58,6 +62,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - VMware Carbon Black EDR - EDR
 - Webroot Anywhere - AV
 - Windows Defender - AV
+- WireGuard - VPN
 
 # Usage
 Execute the compiled program in a terminal or command prompt. The program will show if any security software is detected running on the system.
@@ -78,13 +83,6 @@ $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; 
 ```
 
 ![img_pwrshll.png](img_pwrshll.png)
-
-### Detecting proxy version
-Not yet tested on corporate systems. It detects and uses the system proxy if it exists. It is also fileless.
-
-```
-$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $WebRequestSession=New-Object Microsoft.PowerShell.Commands.WebRequestSession; if ($env:HTTP_PROXY -or $env:http_proxy) { $Proxy=$env:HTTP_PROXY -or $env:http_proxy; $WebRequestSession.Proxy=[System.Net.WebRequest]::GetSystemWebProxy(); $WebRequestSession.Proxy.Credentials=[System.Net.CredentialCache]::DefaultCredentials; }; $ProcessesCSV=Invoke-WebRequest -Uri $Url -WebSession $WebRequestSession | ConvertFrom-Csv; $RunningProcesses=Get-Process; $FoundProcesses=@(); foreach ($process in $ProcessesCSV) { $runningProcess=$RunningProcesses|Where-Object {$_.ProcessName -like $process.Process.Replace('.exe','')}; if ($runningProcess) { $FoundProcesses+=[PSCustomObject]@{'Process'=$runningProcess.ProcessName;'Name'=$process.Name;'Type'=$process.Type}; }; }; $FoundProcesses|Format-Table
-```
 
 # How it Works
 The program uses the CreateToolhelp32Snapshot function from the Windows API to obtain a list of all running processes on the system. It then compares the name of each process with a predefined list of known security software processes. If it finds a match, the program considers that security software is running on the system.
