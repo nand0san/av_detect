@@ -14,7 +14,7 @@ struct SecuritySoftware {
 
 bool isSecuritySoftwareRunning() {
 
-    SetConsoleOutputCP(1252); //Set console encoding to Windows 1252
+    // SetConsoleOutputCP(1252); //Set console encoding to Windows 1252
     SetConsoleOutputCP(65001); //Set console encoding to utf8
 
     std::map<std::string, SecuritySoftware> securitySoftwareProcesses = {
