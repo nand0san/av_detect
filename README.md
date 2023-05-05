@@ -78,16 +78,20 @@ The program will display "Security software is running." if any security softwar
 
 You can use a PowerShell command to directly interact with the CSV hosted on GitHub, without the need to download the project or compile it.
 
+The original command uses the `[PSCustomObject]` notation to create a custom object directly and add it to `$FoundProcesses`. 
+However, this notation caused errors in restrictive environments, so an alternative approach with `Select-Object` was used.
+
 ```
-$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type; } } }; $FoundProcesses | Format-Table
+$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $ProcessInfo = "" | Select-Object Process, Name, Type; $ProcessInfo.Process = $runningProcess.ProcessName; $ProcessInfo.Name = $process.Name; $ProcessInfo.Type = $process.Type; $FoundProcesses += $ProcessInfo; } }; $FoundProcesses | Format-Table
 ```
 Output example:
 ```
-PS C:\Users\XXXX> $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -
-Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesC
-SV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningPr
-ocess) { $FoundProcesses += [PSCustomObject]@{'Process' = $runningProcess.ProcessName; 'Name' = $process.Name; 'Type' = $process.Type
-; } } }; $FoundProcesses | Format-Table
+$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri 
+$Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in 
+$ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process
+.Replace('.exe','') }; if ($runningProcess) { $ProcessInfo = "" | Select-Object Process, Name, Type; 
+$ProcessInfo.Process = $runningProcess.ProcessName; $ProcessInfo.Name = $process.Name; $ProcessInfo.Type = 
+$process.Type; $FoundProcesses += $ProcessInfo; } }; $FoundProcesses | Format-Table
 
 Process                Name                        Type
 -------                ----                        ----
