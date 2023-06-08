@@ -2,42 +2,48 @@
 This program detects if any security software (AV, EDR, XDR, firewall, etc.) is running on the system. The program searches the list of running processes and compares their names with a predefined list of known security software processes.
 
 # Requirements
-A C++11 or later compatible compiler.
+A C++17 or later compatible compiler.
 Windows as the operating system.
 
 # Compilation
 Open a terminal or command prompt.
 Navigate to the directory where the main.cpp file is located.
-Compile the program using CLion, also a C++11 or later compatible compiler. For example, to compile with g++, execute the following command:
+Compile the program using CLion, also a C++17 or later compatible compiler. For example, to compile with g++, execute the following command:
 ```
-g++ -std=c++11 -o av_detect main.cpp
+g++ -std=c++17 -o av_detect main.cpp
 ```
 This will create an executable file named av_detect.exe in the same directory.
 
 # Detected Apps
 - Agnitum Outpost Firewall - Firewall
+- Avast (additional process) - AV
 - Avast - AV
 - Avira - AV
 - AxCrypt - Encryption
+- Bitdefender (additional processes) - AV
 - Bitdefender Total Security - AV
 - Check Point Daemon - Security
 - Check Point Firewall - Firewall
 - Cisco AnyConnect Secure Mobility Client - VPN
 - Cisco Umbrella Roaming Security - Security
+- CrowdStrike Falcon (additional processes) - EDR
 - CrowdStrike Falcon Insight XDR - XDR
 - Cybereason EDR - EDR
 - Cytomic Orion - Security
 - DriveSentry - Security
-- Elastic Winlogbeat - Security
 - ESET NOD32 AV - AV
+- Elastic Winlogbeat - Security
 - FireEye Endpoint Agent - Security
 - FireEye HX - Security
 - FortiEDR - EDR
 - Host Intrusion Prevention System - HIPS
-- Kaspersky Secure Connection - VPN
+- Kaspersky (additional processes) - AV
 - Kaspersky - AV
+- Kaspersky Secure Connection - VPN
 - Kerio Personal Firewall - Firewall
+- Malwarebytes (additional processes) - AV
 - Malwarebytes - AV
+- McAfee (additional processes) - AV
 - McAfee DLP Sensor - DLP
 - McAfee Endpoint Encryption - Encryption
 - McAfee Endpoint Security - AV
@@ -47,16 +53,20 @@ This will create an executable file named av_detect.exe in the same directory.
 - Microsoft Defender ATP (Advanced Threat Protection) - Security
 - Microsoft Security Essentials - AV
 - Microsoft Sysmon - Security
+- Norton Antivirus - AV
 - OpenVPN - VPN
 - Palo Alto Networks Cortex XDR - XDR
 - Palo Alto Networks GlobalProtect - VPN
 - Panda Security - AV
 - Sandboxie - Security
+- SentinelOne (additional processes) - EDR
 - SentinelOne Singularity XDR - XDR
+- Sophos (additional processes) - AV
 - Sophos Endpoint Security - AV
 - Symantec DLP Agent - DLP
 - Symantec Endpoint Protection - AV
 - Tanium EDR - EDR
+- Trend Micro (additional processes) - AV
 - Trend Micro OfficeScan - AV
 - TrueCrypt - Encryption
 - VMware Carbon Black EDR - EDR
