@@ -15,6 +15,8 @@ g++ -std=c++17 -o av_detect main.cpp
 This will create an executable file named av_detect.exe in the same directory.
 
 # Detected Apps
+- Absolute Persistence (acnamagent.exe) - Asset Management
+- Absolute Persistence (acnamlogonagent.exe) - Asset Management
 - Adobe (AGMService.exe) - Telemetry
 - Adobe (AGSService.exe) - Telemetry
 - Agnitum Outpost Firewall - Firewall
@@ -26,6 +28,8 @@ This will create an executable file named av_detect.exe in the same directory.
 - Bitdefender Total Security - AV
 - Check Point Daemon - Security
 - Check Point Firewall - Firewall
+- Cisco AnyConnect (vpnagent.exe) - VPN
+- Cisco AnyConnect (vpnui.exe) - VPN
 - Cisco AnyConnect Secure Mobility Client - VPN
 - Cisco Umbrella Roaming Security - Security
 - CrowdStrike Falcon (additional processes) - EDR
@@ -53,9 +57,13 @@ This will create an executable file named av_detect.exe in the same directory.
 - McAfee Endpoint Security Firewall - Firewall
 - McAfee Host Intrusion Prevention - HIPS
 - McAfee VirusScan - AV
+- Microsoft .NET Framework (SMSvcHost.exe) - Application
 - Microsoft Defender ATP (Advanced Threat Protection) - Security
+- Microsoft Monitoring Agent (MonitoringHost.exe) - Monitoring
+- Microsoft OMS (HealthService.exe) - Monitoring
 - Microsoft Security Essentials - AV
 - Microsoft Sysmon - Security
+- Norton Antivirus (ccSvcHst.exe) - AV
 - Norton Antivirus - AV
 - OpenVPN - VPN
 - Palo Alto Networks (Cyvera) - EDR
@@ -66,6 +74,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - Sandboxie - Security
 - SentinelOne (additional processes) - EDR
 - SentinelOne Singularity XDR - XDR
+- SolarWinds NPM (NPMDAgent.exe) - Network Monitoring
 - Sophos (additional processes) - AV
 - Sophos Endpoint Security - AV
 - Symantec DLP Agent - DLP
