@@ -15,6 +15,8 @@ g++ -std=c++17 -o av_detect main.cpp
 This will create an executable file named av_detect.exe in the same directory.
 
 # Detected Apps
+- Adobe (AGMService.exe) - Telemetry
+- Adobe (AGSService.exe) - Telemetry
 - Agnitum Outpost Firewall - Firewall
 - Avast (additional process) - AV
 - Avast - AV
@@ -30,6 +32,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - CrowdStrike Falcon Insight XDR - XDR
 - Cybereason EDR - EDR
 - Cytomic Orion - Security
+- Darktrace - EDR
 - DriveSentry - Security
 - ESET NOD32 AV - AV
 - Elastic Winlogbeat - Security
@@ -55,7 +58,9 @@ This will create an executable file named av_detect.exe in the same directory.
 - Microsoft Sysmon - Security
 - Norton Antivirus - AV
 - OpenVPN - VPN
+- Palo Alto Networks (Cyvera) - EDR
 - Palo Alto Networks Cortex XDR - XDR
+- Palo Alto Networks GlobalProtect (additional process) - VPN
 - Palo Alto Networks GlobalProtect - VPN
 - Panda Security - AV
 - Sandboxie - Security
@@ -69,10 +74,16 @@ This will create an executable file named av_detect.exe in the same directory.
 - Trend Micro (additional processes) - AV
 - Trend Micro OfficeScan - AV
 - TrueCrypt - Encryption
+- Unknown (Sentinel.exe - Potential: Microsoft Defender) - EDR
+- Unknown (TelemetryService.exe) - Telemetry
+- VMware (VGAuthService.exe) - Virtualization
+- VMware (vm3dservice.exe) - Virtualization
+- VMware (vmtoolsd.exe) - Virtualization
 - VMware Carbon Black EDR - EDR
 - Webroot Anywhere - AV
 - Windows Defender - AV
 - WireGuard - VPN
+
 
 # Usage
 Execute the compiled program in a terminal or command prompt. The program will show if any security software is detected running on the system.

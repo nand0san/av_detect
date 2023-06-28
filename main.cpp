@@ -114,7 +114,18 @@ bool isSecuritySoftwareRunning() {
             {"winlogbeat.exe", 	       {"Elastic Winlogbeat", 				"Security"}},
             {"wireguard.exe", 	       {"WireGuard", 						"VPN"}},
             {"wrsa.exe",                {"Webroot Anywhere",                 "AV"}},
-            {"xagt.exe",                {"FireEye HX",                       "Security"}}
+            {"xagt.exe",                {"FireEye HX",                       "Security"}},
+            {"concentr.exe",               {"Palo Alto Networks GlobalProtect",       "VPN"}},
+            {"CyveraConsole.exe",          {"Palo Alto Networks (Cyvera)",            "EDR"}},
+            {"DarktraceTSA.exe",           {"Darktrace",                              "EDR"}},
+            {"TelemetryService.exe",       {"Unknown",                                "Telemetry"}},
+            {"Sentinel.exe",               {"Unknown (Potential: Microsoft Defender)","EDR"}},
+            {"AGMService.exe",             {"Adobe",                                  "Telemetry"}},
+            {"AGSService.exe",             {"Adobe",                                  "Telemetry"}},
+            {"vm3dservice.exe",            {"VMware",                                 "Virtualization"}},
+            {"vmtoolsd.exe",               {"VMware",                                 "Virtualization"}},
+            {"VGAuthService.exe",          {"VMware",                                 "Virtualization"}},
+
     };
 
     bool found = false;
