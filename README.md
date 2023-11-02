@@ -111,6 +111,8 @@ You can use a PowerShell command to directly interact with the CSV hosted on Git
 The original command uses the `[PSCustomObject]` notation to create a custom object directly and add it to `$FoundProcesses`. 
 However, this notation caused errors in restrictive environments, so an alternative approach with `Select-Object` was used.
 
+> Red Teamers, be carefull. EDRs can identify the powershell command as tasklist activity. To avoid this compile or use compiled version.
+ 
 ```
 $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $ProcessInfo = "" | Select-Object Process, Name, Type; $ProcessInfo.Process = $runningProcess.ProcessName; $ProcessInfo.Name = $process.Name; $ProcessInfo.Type = $process.Type; $FoundProcesses += $ProcessInfo; } }; $FoundProcesses | Format-Table; Write-Output "`nIf you want to contribute to the project, please open issue in https://github.com/nand0san/av_detect with a txt file like 'Get-Process > my_processes.txt' and will check if any new process can be added to the tool. Thank you!"
 ```
