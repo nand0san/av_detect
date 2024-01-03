@@ -32,6 +32,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - Cisco AnyConnect (vpnui.exe) - VPN
 - Cisco AnyConnect Secure Mobility Client - VPN
 - Cisco Umbrella Roaming Security - Security
+- CmRcService - Microsoft Configuration Manager Remote Control Service
 - CrowdStrike Falcon (additional processes) - EDR
 - CrowdStrike Falcon Insight XDR - XDR
 - Cybereason EDR - EDR
@@ -72,6 +73,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - Palo Alto Networks GlobalProtect - VPN
 - Panda Security - AV
 - Sandboxie - Security
+- SecurityHealthService - Windows Security Health Service
 - SentinelOne (additional processes) - EDR
 - SentinelOne Singularity XDR - XDR
 - SolarWinds NPM (NPMDAgent.exe) - Network Monitoring
@@ -106,6 +108,7 @@ This will create an executable file named av_detect.exe in the same directory.
 - Webroot Anywhere - AV
 - Windows Defender - AV
 - WireGuard - VPN
+- mDNSResponder (Bonjour Service) - mDNS Network Service 
 
 
 # Usage
