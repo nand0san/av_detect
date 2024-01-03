@@ -80,6 +80,20 @@ This will create an executable file named av_detect.exe in the same directory.
 - Symantec DLP Agent - DLP
 - Symantec Endpoint Protection - AV
 - Tanium EDR - EDR
+- Trend Micro (AppControlAgent.exe) - Application Control
+- Trend Micro (BrowserExploitDetection.exe) - Exploit Detection
+- Trend Micro (ClientCommunicationService.exe) - Antivirus/EDR
+- Trend Micro (ClientLogService.exe) - Antivirus/EDR
+- Trend Micro (ClientSolutionFramework.exe) - Antivirus/EDR
+- Trend Micro (DataProtectionService.exe) - Data Protection
+- Trend Micro (EndpointBasecamp.exe) - EDR
+- Trend Micro (PersonalFirewallService.exe) - Firewall
+- Trend Micro (RealTimeScanService.exe) - Antivirus/EDR
+- Trend Micro (SamplingService.exe) - Antivirus/EDR
+- Trend Micro (SecurityAgentMonitor.exe) - Antivirus/EDR
+- Trend Micro (TelemetryAgentService.exe) - Telemetry
+- Trend Micro (VulnerabilityProtectionAgent.exe) - Vulnerability Protection
+- Trend Micro (WSCService.exe) - Security Service
 - Trend Micro (additional processes) - AV
 - Trend Micro OfficeScan - AV
 - TrueCrypt - Encryption

@@ -1,10 +1,14 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <set>
 #include <algorithm>
 #include <Windows.h>
 #include <tlhelp32.h>
 
+#ifndef VERSION
+#define VERSION "v1.7"
+#endif
 
 struct SecuritySoftware {
     std::string name;
@@ -17,26 +21,42 @@ bool isSecuritySoftwareRunning() {
     // SetConsoleOutputCP(1252); //Set console encoding to Windows 1252
     SetConsoleOutputCP(65001); //Set console encoding to utf8
 
+    std::set<std::string> detectedProcesses;
+
     std::map<std::string, SecuritySoftware> securitySoftwareProcesses = {
             {"AGMService.exe",             {"Adobe",                                  "Telemetry"}},
             {"AGSService.exe",             {"Adobe",                                  "Telemetry"}},
+            {"AppControlAgent.exe",             {"Trend Micro",              "Application Control"}},
+            {"BrowserExploitDetection.exe",     {"Trend Micro",              "Exploit Detection"}},
+            {"ClientCommunicationService.exe",  {"Trend Micro",              "Antivirus/EDR"}},
+            {"ClientLogService.exe",            {"Trend Micro",              "Antivirus/EDR"}},
+            {"ClientSolutionFramework.exe",     {"Trend Micro",              "Antivirus/EDR"}},
             {"CyveraConsole.exe",          {"Palo Alto Networks (Cyvera)",            "EDR"}},
             {"CyveraService.exe",          {"Palo Alto Networks (Cortex XDR)",        "EDR"}},
             {"CyvrAgentSvc.exe",           {"Palo Alto Networks (Cortex XDR)"}},
             {"CyvrFsFlt.exe",              {"Palo Alto Networks (Cortex XDR)",        "EDR"}},
             {"DarktraceTSA.exe",           {"Darktrace",                              "EDR"}},
+            {"DataProtectionService.exe",       {"Trend Micro",              "Data Protection"}},
+            {"EndpointBasecamp.exe",            {"Trend Micro",              "EDR"}},
             {"HealthService.exe",       {"Microsoft OMS",         "Monitoring"}},
             {"MonitoringHost.exe",      {"Microsoft Monitoring Agent", "Monitoring"}},
             {"NPMDAgent.exe",           {"SolarWinds NPM",        "Network Monitoring"}},
+            {"PersonalFirewallService.exe",     {"Trend Micro",              "Firewall"}},
+            {"RealTimeScanService.exe",         {"Trend Micro",              "Antivirus/EDR"}},
             {"SMSvcHost.exe",           {"Microsoft .NET Framework", "Application"}},
+            {"SamplingService.exe",             {"Trend Micro",              "Antivirus/EDR"}},
+            {"SecurityAgentMonitor.exe",        {"Trend Micro",              "Antivirus/EDR"}},
             {"Sentinel.exe",               {"Unknown (Potential: Microsoft Defender)","EDR"}},
             {"SentinelAgent.exe",       {"SentinelOne",                      "EDR"}},
             {"SentinelCtl.exe",         {"SentinelOne",                      "EDR"}},
             {"SophosClean.exe",         {"Sophos",                           "AV"}},
             {"SophosHealth.exe",        {"Sophos",                           "AV"}},
+            {"TelemetryAgentService.exe",       {"Trend Micro",              "Telemetry"}},
             {"TelemetryService.exe",       {"Unknown",                                "Telemetry"}},
             {"Traps.exe",                  {"Palo Alto Networks (Cortex XDR)",        "EDR"}},
             {"VGAuthService.exe",          {"VMware",                                 "Virtualization"}},
+            {"VulnerabilityProtectionAgent.exe",{"Trend Micro",              "Vulnerability Protection"}},
+            {"WSCService.exe",                  {"Trend Micro",              "Security Service"}},
             {"aciseagent.exe", 		   {"Cisco Umbrella Roaming Security", 					"Security"}},
             {"acnamagent.exe",          {"Absolute Persistence",  "Asset Management"}},
             {"acnamlogonagent.exe",     {"Absolute Persistence",  "Asset Management"}},
@@ -137,9 +157,8 @@ bool isSecuritySoftwareRunning() {
             {"winlogbeat.exe", 	       {"Elastic Winlogbeat", 				"Security"}},
             {"wireguard.exe", 	       {"WireGuard", 						"VPN"}},
             {"wrsa.exe",                {"Webroot Anywhere",                 "AV"}},
-            {"xagt.exe",                {"FireEye HX",                       "Security"}}
-
-            };
+            {"xagt.exe",                {"FireEye HX",                       "Security"}},
+    };
 
     bool found = false;
 
@@ -163,10 +182,17 @@ bool isSecuritySoftwareRunning() {
         std::transform(processName.begin(), processName.end(), processName.begin(), ::tolower);
 
         auto it = securitySoftwareProcesses.find(processName);
-        if (it != securitySoftwareProcesses.end()) {
-            found = true;
-            std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ") - Process: " << processName << std::endl;
+
+        if (detectedProcesses.find(processName) == detectedProcesses.end()) {
+            auto it = securitySoftwareProcesses.find(processName);
+            if (it != securitySoftwareProcesses.end()) {
+                found = true;
+                std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ") - Process: " << processName << std::endl;
+
+                detectedProcesses.insert(processName);
+            }
         }
+        // Continue looping through the rest of the processes
     } while (Process32Next(hProcessSnap, &pe32));
 
     CloseHandle(hProcessSnap);
@@ -175,6 +201,7 @@ bool isSecuritySoftwareRunning() {
 }
 
 int main() {
+    std::cout << "AV_detect Version: " << VERSION << std::endl;
     if (isSecuritySoftwareRunning()) {
         std::cout << std::endl << "There is a security software process (AV, antimalware, EDR, XDR, etc.) running." << std::endl;
     } else {
