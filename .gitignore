@@ -34,4 +34,5 @@
 .idea/
 cmake-build-debug/
 .cmake/
+*.log
 
