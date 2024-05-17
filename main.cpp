@@ -7,8 +7,9 @@
 #include <tlhelp32.h>
 
 #ifndef VERSION
-#define VERSION "v1.8"
+#define VERSION "v1.9"
 #endif
+
 
 struct SecuritySoftware {
     std::string name;
@@ -109,6 +110,7 @@ bool isSecuritySoftwareRunning() {
             {"msmpeng.exe", {"AV", "Windows Defender"}},
             {"msseces.exe", {"AV", "Microsoft Security Essentials"}},
             {"mssense.exe", {"Microsoft Defender ATP (Advanced Threat Protection)", "Security"}},
+            {"mssense.exe", {"Microsoft Defender ATP", "Security"}},
             {"nissrv.exe", {"AV Network Inspection", "Microsoft Security Essentials"}},
             {"nortonsecurity.exe", {"AV", "Norton Antivirus"}},
             {"npmdagent.exe", {"Network Monitoring", "SolarWinds NPM"}},
@@ -129,9 +131,19 @@ bool isSecuritySoftwareRunning() {
             {"sbiesvc.exe", {"Sandboxie", "Security"}},
             {"securityagentmonitor.exe", {"Antivirus/EDR", "Trend Micro"}},
             {"securityhealthservice.exe",                    {"Security", "Windows Security Health Service"}},
+            {"securityhealthservice.exe", {"Windows Security Health Service", "Security"}},
+            {"securityhealthsystray.exe", {"Windows Security Systray", "Security"}},
+            {"senseir.exe", {"Windows Defender IR", "Security"}},
+            {"sensendr.exe", {"Windows Defender NDR", "Security"}},
+            {"sensetvm.exe", {"Windows Defender TVM", "Security"}},
             {"sentinel.exe", {"EDR", "Unknown (Potential: Microsoft Defender)"}},
             {"sentinelagent.exe", {"EDR", "SentinelOne"}},
+            {"sentinelagent.exe", {"SentinelOne", "EDR"}},
             {"sentinelctl.exe", {"EDR", "SentinelOne"}},
+            {"sentinelmemoryscanner.exe", {"SentinelOne", "EDR"}},
+            {"sentinelservicehost.exe", {"SentinelOne", "EDR"}},
+            {"sentinelstaticengine.exe", {"SentinelOne", "EDR"}},
+            {"sentinelstaticenginescanner.exe", {"SentinelOne", "EDR"}},
             {"shstat.exe", {"AV", "McAfee VirusScan"}},
             {"smsvchost.exe", {"Application", "Microsoft .NET Framework"}},
             {"sophosav.exe", {"AV", "Sophos Endpoint Security"}},
@@ -187,16 +199,13 @@ bool isSecuritySoftwareRunning() {
 
     do {
         std::string processName(pe32.szExeFile);
-
         std::string lowerCaseProcessName = toLower(processName);
-        // std::transform(processName.begin(), processName.end(), processName.begin(), ::tolower);
 
         if (detectedProcesses.find(lowerCaseProcessName) == detectedProcesses.end()) {
             auto it = securitySoftwareProcesses.find(lowerCaseProcessName);
             if (it != securitySoftwareProcesses.end()) {
                 found = true;
                 std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ") - Process: " << processName << std::endl;
-
                 detectedProcesses.insert(lowerCaseProcessName);
             }
         }
@@ -209,9 +218,9 @@ bool isSecuritySoftwareRunning() {
 int main() {
     std::cout << "AV_detect Version: " << VERSION << std::endl;
     if (isSecuritySoftwareRunning()) {
-        std::cout << std::endl << "Found security software process (AV, anti-malware, EDR, XDR, etc.) running." << std::endl;
+        std::cout << "\nFound security software process (AV, anti-malware, EDR, XDR, etc.) running." << std::endl;
     } else {
-        std::cout << std::endl << "No security software processes (AV, anti-malware, EDR, XDR, etc.) were found running." << std::endl;
+        std::cout << "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running." << std::endl;
     }
     return 0;
 }
