@@ -14,101 +14,78 @@ g++ -std=c++17 -o av_detect main.cpp
 ```
 This will create an executable file named av_detect.exe in the same directory.
 
-# Detected Apps
-- Absolute Persistence (acnamagent.exe) - Asset Management
-- Absolute Persistence (acnamlogonagent.exe) - Asset Management
-- Adobe (AGMService.exe) - Telemetry
-- Adobe (AGSService.exe) - Telemetry
+## Detected Apps
+
+The program detects the following security software processes:
+
+- Absolute Persistence (`acnamagent.exe`) - Asset Management
+- Absolute Persistence (`acnamlogonagent.exe`) - Asset Management
+- Adobe (`AGMService.exe`) - Telemetry
+- Adobe (`AGSService.exe`) - Telemetry
 - Agnitum Outpost Firewall - Firewall
-- Avast (additional process) - AV
-- Avast - AV
-- Avira - AV
-- AxCrypt - Encryption
-- Bitdefender (additional processes) - AV
-- Bitdefender Total Security - AV
-- Check Point Daemon - Security
-- Check Point Firewall - Firewall
-- Cisco AnyConnect (vpnagent.exe) - VPN
-- Cisco AnyConnect (vpnui.exe) - VPN
-- Cisco AnyConnect Secure Mobility Client - VPN
-- Cisco Umbrella Roaming Security - Security
-- CmRcService - Microsoft Configuration Manager Remote Control Service
-- CrowdStrike Falcon (additional processes) - EDR
-- CrowdStrike Falcon Insight XDR - XDR
-- Cybereason EDR - EDR
-- Cytomic Orion - Security
-- Darktrace - EDR
-- DriveSentry - Security
-- ESET NOD32 AV - AV
-- Elastic Winlogbeat - Security
-- FireEye Endpoint Agent - Security
-- FireEye HX - Security
-- FortiEDR - EDR
-- Host Intrusion Prevention System - HIPS
-- Kaspersky (additional processes) - AV
-- Kaspersky - AV
-- Kaspersky Secure Connection - VPN
-- Kerio Personal Firewall - Firewall
-- Malwarebytes (additional processes) - AV
-- Malwarebytes - AV
-- McAfee (additional processes) - AV
-- McAfee DLP Sensor - DLP
-- McAfee Endpoint Encryption - Encryption
-- McAfee Endpoint Security - AV
-- McAfee Endpoint Security Firewall - Firewall
-- McAfee Host Intrusion Prevention - HIPS
-- McAfee VirusScan - AV
-- Microsoft .NET Framework (SMSvcHost.exe) - Application
-- Microsoft Defender ATP (Advanced Threat Protection) - Security
-- Microsoft Monitoring Agent (MonitoringHost.exe) - Monitoring
-- Microsoft OMS (HealthService.exe) - Monitoring
-- Microsoft Security Essentials - AV
-- Microsoft Sysmon - Security
-- Norton Antivirus (ccSvcHst.exe) - AV
-- Norton Antivirus - AV
-- OpenVPN - VPN
-- Palo Alto Networks (Cyvera) - EDR
-- Palo Alto Networks Cortex XDR - XDR
-- Palo Alto Networks GlobalProtect (additional process) - VPN
-- Palo Alto Networks GlobalProtect - VPN
-- Panda Security - AV
-- Sandboxie - Security
-- SecurityHealthService - Windows Security Health Service
-- SentinelOne (additional processes) - EDR
-- SentinelOne Singularity XDR - XDR
-- SolarWinds NPM (NPMDAgent.exe) - Network Monitoring
-- Sophos (additional processes) - AV
-- Sophos Endpoint Security - AV
-- Symantec DLP Agent - DLP
-- Symantec Endpoint Protection - AV
-- Tanium EDR - EDR
-- Trend Micro (AppControlAgent.exe) - Application Control
-- Trend Micro (BrowserExploitDetection.exe) - Exploit Detection
-- Trend Micro (ClientCommunicationService.exe) - Antivirus/EDR
-- Trend Micro (ClientLogService.exe) - Antivirus/EDR
-- Trend Micro (ClientSolutionFramework.exe) - Antivirus/EDR
-- Trend Micro (DataProtectionService.exe) - Data Protection
-- Trend Micro (EndpointBasecamp.exe) - EDR
-- Trend Micro (PersonalFirewallService.exe) - Firewall
-- Trend Micro (RealTimeScanService.exe) - Antivirus/EDR
-- Trend Micro (SamplingService.exe) - Antivirus/EDR
-- Trend Micro (SecurityAgentMonitor.exe) - Antivirus/EDR
-- Trend Micro (TelemetryAgentService.exe) - Telemetry
-- Trend Micro (VulnerabilityProtectionAgent.exe) - Vulnerability Protection
-- Trend Micro (WSCService.exe) - Security Service
-- Trend Micro (additional processes) - AV
-- Trend Micro OfficeScan - AV
-- TrueCrypt - Encryption
-- Unknown (Sentinel.exe - Potential: Microsoft Defender) - EDR
-- Unknown (TelemetryService.exe) - Telemetry
-- VMware (VGAuthService.exe) - Virtualization
-- VMware (vm3dservice.exe) - Virtualization
-- VMware (vmtoolsd.exe) - Virtualization
-- VMware Carbon Black EDR - EDR
-- Webroot Anywhere - AV
-- Windows Defender - AV
-- WireGuard - VPN
-- mDNSResponder (Bonjour Service) - mDNS Network Service 
+- Avast (`aswidsagent.exe`, `avastsvc.exe`, `avastui.exe`) - AV
+- Avira (`avgnt.exe`, `avguard.exe`) - AV
+- AxCrypt (`axcrypt.exe`) - Encryption
+- Bitdefender (`bdntwrk.exe`, `updatesrv.exe`) - AV
+- Bitdefender Total Security (`bdagent.exe`, `vsserv.exe`) - AV
+- Check Point Daemon (`cpd.exe`) - Security
+- Check Point Firewall (`fw.exe`) - Firewall
+- Cisco AnyConnect (`vpnagent.exe`, `vpnui.exe`) - VPN
+- Cisco AnyConnect Secure Mobility Client (`vpnagent.exe`) - VPN
+- Cisco Umbrella Roaming Security (`aciseagent.exe`, `acumbrellaagent.exe`) - Security DNS
+- CmRcService (`CmRcService.exe`) - Remote Control
+- CrowdStrike Falcon (`csfalconcontainer.exe`, `csfalcondaterepair.exe`, `csfalconservice.exe`) - EDR
+- CrowdStrike Falcon Insight XDR (`cbcomms.exe`) - XDR
+- Cybereason EDR (`cybereason.exe`) - EDR
+- Cytomic Orion (`cytomicendpoint.exe`) - Security
+- Darktrace (`DarktraceTSA.exe`) - EDR
+- DriveSentry (`dsmonitor.exe`, `dwengine.exe`) - Security
+- ESET NOD32 AV (`egui.exe`, `ekrn.exe`) - AV
+- Elastic Winlogbeat (`winlogbeat.exe`) - Security
+- FireEye Endpoint Agent (`firesvc.exe`, `firetray.exe`) - Security
+- FireEye HX (`xagt.exe`) - Security
+- FortiEDR (`fortiedr.exe`) - EDR
+- Host Intrusion Prevention System (`hips.exe`) - HIPS
+- Kaspersky (`avp.exe`, `avpui.exe`, `klwtblfs.exe`, `klwtpwrs.srv`) - AV
+- Kaspersky Secure Connection (`ksde.exe`, `ksdeui.exe`) - VPN
+- Kerio Personal Firewall (`kpf4ss.exe`) - Firewall
+- Malwarebytes (`mbae64.sys`, `mbamservice.exe`, `mbamswissarmy.sys`, `mbamtray.exe`) - AV
+- McAfee (`mfeann.exe`, `mfemms.exe`, `masvc.exe`, `macmnsvc.exe`) - AV
+- McAfee DLP Sensor (`dlpsensor.exe`) - DLP
+- McAfee Endpoint Encryption (`eegoservice.exe`, `mdecryptservice.exe`, `mfeepehost.exe`) - Encryption
+- McAfee Endpoint Security (`edpa.exe`, `shstat.exe`, `mcshield.exe`, `mfefire.exe`, `mfemactl.exe`, `mfemms.exe`) - AV
+- McAfee Endpoint Security Firewall (`mfemactl.exe`) - Firewall
+- McAfee Host Intrusion Prevention (`mfefire.exe`) - HIPS
+- McAfee VirusScan (`mcshield.exe`, `shstat.exe`) - AV
+- Microsoft .NET Framework (`SMSvcHost.exe`) - Application
+- Microsoft Defender ATP (`mssense.exe`) - Security
+- Microsoft Monitoring Agent (`MonitoringHost.exe`) - Monitoring
+- Microsoft OMS (`HealthService.exe`) - Monitoring
+- Microsoft Security Essentials (`msseces.exe`, `nissrv.exe`) - AV
+- Microsoft Sysmon (`sysmon.exe`, `sysmon64.exe`) - Security
+- Norton Antivirus (`ccSvcHst.exe`, `nortonsecurity.exe`, `ns.exe`, `nsservice.exe`) - AV
+- OpenVPN (`openvpnserv.exe`) - VPN
+- Palo Alto Networks (Cyvera) (`CyveraConsole.exe`, `CyveraService.exe`) - EDR
+- Palo Alto Networks Cortex XDR (`CyvrAgentSvc.exe`, `CyvrFsFlt.exe`, `trapsagent.exe`, `trapsd.exe`) - XDR
+- Palo Alto Networks GlobalProtect (`concentr.exe`, `pangps.exe`) - VPN
+- Panda Security (`panda_url_filtering.exe`, `pavfnsvr.exe`, `pavsrv.exe`, `psanhost.exe`) - AV
+- Sandboxie (`sbiesvc.exe`) - Security
+- SecurityHealthService (`SecurityHealthService.exe`) - Windows Security Health Service
+- SentinelOne (`Sentinel.exe`, `SentinelAgent.exe`, `SentinelCtl.exe`) - EDR
+- SentinelOne Singularity XDR (`cpx.exe`) - XDR
+- SolarWinds NPM (`NPMDAgent.exe`) - Network Monitoring
+- Sophos (`savservice.exe`, `sophosav.exe`, `sophossps.exe`, `sophosui.exe`, `SophosClean.exe`, `SophosHealth.exe`) - AV
+- Symantec DLP Agent (`dlpagent.exe`) - DLP
+- Symantec Endpoint Protection (`ccsvchst.exe`, `rtvscan.exe`) - AV
+- Tanium EDR (`tanclient.exe`) - EDR
+- Trend Micro (`AppControlAgent.exe`, `BrowserExploitDetection.exe`, `ClientCommunicationService.exe`, `ClientLogService.exe`, `ClientSolutionFramework.exe`, `DataProtectionService.exe`, `EndpointBasecamp.exe`, `PersonalFirewallService.exe`, `RealTimeScanService.exe`, `SamplingService.exe`, `SecurityAgentMonitor.exe`, `TelemetryAgentService.exe`, `coreServiceShell.exe`, `uiWinMgr.exe`, `tmntsrv.exe`, `tmproxy.exe`) - AV, EDR, Application Control, Exploit Detection, Data Protection, Firewall, Security Service, Vulnerability Protection, Telemetry
+- TrueCrypt (`truecrypt.exe`) - Encryption
+- VMware (`VGAuthService.exe`, `vm3dservice.exe`, `vmtoolsd.exe`) - Virtualization
+- VMware Carbon Black EDR (`carbonsensor.exe`) - EDR
+- Webroot Anywhere (`wrsa.exe`) - AV
+- Windows Defender (`msascuil.exe`, `msmpeng.exe`, `windefend.exe`) - AV
+- WireGuard (`wireguard.exe`) - VPN
+- mDNSResponder (Bonjour Service) - Network Service
 
 
 # Usage
