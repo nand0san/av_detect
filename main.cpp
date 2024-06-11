@@ -7,7 +7,7 @@
 #include <tlhelp32.h>
 
 #ifndef VERSION
-#define VERSION "v1.9"
+#define VERSION "v1.91"
 #endif
 
 
