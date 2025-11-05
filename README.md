@@ -20,7 +20,7 @@ Detects if security software (AV, EDR, XDR, firewall, VPN, DLP, telemetry, etc.)
 
 * **OS:** Windows.
 * **Compiler:** C++17 or later (MSVC, MinGW-w64 g++, clang-cl).
-* **SDK:** Windows SDK headers/libs available (for `CreateToolhelp32Snapshot`).
+* **SDK/Headers:** On MSVC use the Windows SDK (bundled with the VS toolchain). MinGW-w64 already provides Win32 headers (`tlhelp32.h`) needed for `CreateToolhelp32Snapshot`.
 
 
 
@@ -53,6 +53,7 @@ cmake --build build --config Release
 ```
 
 > Tip (Blue Team): if you need fewer AV heuristics from SmartScreen/Defender on internal use, sign the binary with a code-signing cert (`signtool sign /fd SHA256 /a av_detect.exe`).
+> Note: On 64-bit Windows, prefer building a 64-bit binary to simplify potential future module/path inspection (WOW64 nuances).
 
 
 
@@ -116,7 +117,7 @@ Exit code is always `0`; the tool reports findings via stdout.
 * **Elastic Defend / Endpoint** (`elastic-endpoint.exe`, `endpoint-security.exe`) – EDR / Telemetry
 * **Elastic Agent (Fleet)** (`elastic-agent.exe`) – EDR / Telemetry / UEM
 * **Elastic Winlogbeat** (`winlogbeat.exe`) – Security Telemetry
-* **FireEye Endpoint / Trellix HX** (`firesvc.exe`, `firetray.exe`, `xagt.exe`) – Security / EDR
+* **FireEye HX / Trellix HX** (`firesvc.exe`, `firetray.exe`, `xagt.exe`) – Security / EDR
 * **FortiEDR** (`fortiedr.exe`) – EDR
 * **Fortinet FortiClient / FortiTray** (`fortitray.exe`, `fortivpn.exe`) – VPN / Endpoint Security
 * **Host Intrusion Prevention System** (`hips.exe`) – HIPS
@@ -138,6 +139,7 @@ Exit code is always `0`; the tool reports findings via stdout.
 * **Palo Alto Networks GlobalProtect** (`concentr.exe`, `pangps.exe`) – VPN
 * **Panda Security** (`panda_url_filtering.exe`, `pavfnsvr.exe`, `pavsrv.exe`, `psanhost.exe`) – AV
 * **Rapid7 Insight Agent** (`ir_agent.exe`) – EDR / Vulnerability / IR
+* **Qualys Cloud Agent** (`qualysagent.exe`, `qualysagentui.exe`) – Vulnerability / Compliance
 * **Sandboxie** (`sbiesvc.exe`) – Security
 * **Security Health** (`securityhealthservice.exe`, `securityhealthsystray.exe`) – Windows Security Health
 * **SentinelOne** (`sentinelagent.exe`, `sentinelctl.exe`, `sentinelservicehost.exe`,
@@ -164,7 +166,7 @@ Exit code is always `0`; the tool reports findings via stdout.
 
 
 
-## Alternative usage with pure PowerShell (no compilation)
+## Alternative usage with pure PowerShell (no exe)
 
 You can query the maintained CSV directly from GitHub and match against the running process list.
 
@@ -172,21 +174,30 @@ You can query the maintained CSV directly from GitHub and match against the runn
 
 ```powershell
 $Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv";
-$ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv;
-$RunningProcesses = Get-Process;
-$FoundProcesses = @();
-foreach ($process in $ProcessesCSV) {
-  $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') };
-  if ($runningProcess) {
-    $ProcessInfo = "" | Select-Object Process, Name, Type;
-    $ProcessInfo.Process = $runningProcess.ProcessName;
-    $ProcessInfo.Name = $process.Name;
-    $ProcessInfo.Type = $process.Type;
-    $FoundProcesses += $ProcessInfo;
+$Csv = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv;
+$Procs = Get-Process;
+$Hits = foreach($p in $Csv){
+  $name = ($p.Process -replace '\.exe$','');                        # normalize
+  $r = $Procs | Where-Object { $_.ProcessName -ieq $name };         # exact case-insensitive
+  if($r){
+    $rp = $r | Select-Object -First 1;                              # avoid array if multiple instances
+    [pscustomobject]@{ Process = $rp.ProcessName; Name = $p.Name; Type = $p.Type }
   }
 }
-$FoundProcesses | Format-Table;
-Write-Output "`nIf you want to contribute to the project, please open an issue in https://github.com/nand0san/av_detect with a txt file like 'Get-Process > my_processes.txt'. Thanks!"
+$Hits | Sort-Object Process,Name,Type -Unique | Format-Table
+```
+
+## PowerShell offline (with downloaded CSV)
+
+```powershell
+$Csv = Import-Csv .\processes.csv
+$Procs = Get-Process
+$Hits = foreach($p in $Csv){
+  $name = ($p.Process -replace '\.exe$','')
+  $r = $Procs | Where-Object { $_.ProcessName -ieq $name }
+  if($r){ $rp = $r | Select-Object -First 1; [pscustomobject]@{ Process=$rp.ProcessName; Name=$p.Name; Type=$p.Type } }
+}
+$Hits | Sort-Object Process,Name,Type -Unique | Format-Table
 ```
 
 
