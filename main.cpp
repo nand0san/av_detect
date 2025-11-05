@@ -1,186 +1,509 @@
 #include <iostream>
-#include <map>
 #include <string>
-#include <set>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 #include <Windows.h>
 #include <tlhelp32.h>
 
 #ifndef VERSION
-#define VERSION "v1.91"
+#define VERSION "v2.00"
 #endif
 
-
 struct SecuritySoftware {
-    std::string name;
-    std::string type;
+    std::string name;  // Producto / Descripción humana
+    std::string type;  // Categoría (AV, EDR, XDR, VPN, etc.)
 };
 
-std::string toLower(const std::string& str) {
-    std::string lowerCaseStr = str;
-    std::transform(lowerCaseStr.begin(), lowerCaseStr.end(), lowerCaseStr.begin(), ::tolower);
-    return lowerCaseStr;
+/**
+ * @brief toLower
+ * Normaliza un std::string a minúsculas ASCII.
+ */
+static std::string toLower(const std::string& str) {
+    std::string out = str;
+    std::transform(
+            out.begin(),
+            out.end(),
+            out.begin(),
+            [](unsigned char c){ return static_cast<char>(::tolower(c)); }
+    );
+    return out;
 }
 
+/**
+ * @brief isSecuritySoftwareRunning
+ * Enumera procesos vivos y cruza con lista de binarios conocidos
+ * de AV / EDR / VPN corporativa / telemetría / DLP / gestión IR.
+ *
+ * @return true si se detecta al menos un binario interesante.
+ */
 bool isSecuritySoftwareRunning() {
 
-    // SetConsoleOutputCP(1252); //Set console encoding to Windows 1252
-    SetConsoleOutputCP(65001); //Set console encoding to utf8
+    // Consola en UTF-8
+    SetConsoleOutputCP(65001);
 
-    std::set<std::string> detectedProcesses;
+    // Para evitar imprimir el mismo proceso varias veces
+    std::unordered_set<std::string> detectedProcesses;
 
-    std::map<std::string, SecuritySoftware> securitySoftwareProcesses = {
-            {"aciseagent.exe", {"Cisco Umbrella Roaming Security", "Security DNS"}},
-            {"acnamagent.exe", {"Absolute Persistence", "Asset Management"}},
-            {"acnamlogonagent.exe", {"Absolute Persistence", "Asset Management"}},
-            {"acumbrellaagent.exe", {"Cisco Umbrella Roaming Security", "Security DNS"}},
-            {"agmservice.exe", {"Adobe", "Telemetry"}},
-            {"agsservice.exe", {"Adobe", "Telemetry"}},
-            {"appcontrolagent.exe", {"Application Control", "Trend Micro"}},
-            {"aswidsagent.exe", {"AV", "Avast"}},
-            {"avastsvc.exe", {"AV", "Avast"}},
-            {"avastui.exe", {"AV", "Avast"}},
-            {"avgnt.exe", {"AV", "Avira"}},
-            {"avguard.exe", {"AV", "Avira"}},
-            {"avp.exe", {"AV", "Kaspersky"}},
-            {"avpui.exe", {"AV", "Kaspersky"}},
-            {"axcrypt.exe", {"AxCrypt", "Encryption"}},
-            {"bdagent.exe", {"AV", "Bitdefender Total Security"}},
-            {"bdntwrk.exe", {"AV", "Bitdefender"}},
-            {"browserexploitdetection.exe", {"Exploit Detection", "Trend Micro"}},
-            {"carbonsensor.exe", {"EDR", "VMware Carbon Black EDR"}},
-            {"cbcomms.exe", {"CrowdStrike Falcon Insight XDR", "XDR"}},
-            {"ccsvchst.exe", {"AV", "Norton Antivirus"}},
-            {"ccsvchst.exe", {"AV", "Symantec Endpoint Protection"}},
-            {"clientcommunicationservice.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"clientlogservice.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"clientsolutionframework.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"cmrcservice.exe", {"Microsoft Configuration Manager Remote Control Service","Remote Control"}},
-            {"concentr.exe", {"Palo Alto Networks GlobalProtect", "VPN"}},
-            {"coreserviceshell.exe", {"AV", "Trend Micro"}},
-            {"cpd.exe", {"Check Point Daemon", "Security"}},
-            {"cpx.exe", {"SentinelOne Singularity XDR", "XDR"}},
-            {"csfalconcontainer.exe", {"CrowdStrike Falcon", "EDR"}},
-            {"csfalcondaterepair.exe", {"CrowdStrike Falcon", "EDR"}},
-            {"csfalconservice.exe", {"CrowdStrike Falcon Insight XDR", "XDR"}},
-            {"cybereason.exe", {"Cybereason EDR", "EDR"}},
-            {"cytomicendpoint.exe", {"Cytomic Orion", "Security"}},
-            {"cyveraconsole.exe", {"EDR", "Palo Alto Networks (Cyvera)"}},
-            {"cyveraservice.exe", {"EDR", "Palo Alto Networks (Cortex XDR)"}},
-            {"cyvragentsvc.exe", {"EDR", "Palo Alto Networks (Cortex XDR)"}},
-            {"cyvrfsflt.exe", {"EDR", "Palo Alto Networks (Cortex XDR)"}},
-            {"darktracetsa.exe", {"Darktrace", "EDR"}},
-            {"dataprotectionservice.exe", {"Data Protection", "Trend Micro"}},
-            {"dlpagent.exe", {"DLP", "Symantec DLP Agent"}},
-            {"dlpsensor.exe", {"DLP", "McAfee DLP Sensor"}},
-            {"dsmonitor.exe", {"DriveSentry", "Security"}},
-            {"dwengine.exe", {"DriveSentry", "Security"}},
-            {"edpa.exe", {"AV", "McAfee Endpoint Security"}},
-            {"eegoservice.exe", {"Encryption", "McAfee Endpoint Encryption"}},
-            {"egui.exe", {"AV", "ESET NOD32 AV"}},
-            {"ekrn.exe", {"AV", "ESET NOD32 AV"}},
-            {"endpointbasecamp.exe", {"EDR", "Trend Micro"}},
-            {"firesvc.exe", {"FireEye Endpoint Agent", "Security"}},
-            {"firetray.exe", {"FireEye Endpoint Agent", "Security"}},
-            {"fortiedr.exe", {"EDR", "FortiEDR"}},
-            {"fw.exe", {"Check Point Firewall", "Firewall"}},
-            {"healthservice.exe", {"Microsoft OMS", "Monitoring"}},
-            {"hips.exe", {"HIPS", "Host Intrusion Prevention System"}},
-            {"klwtblfs.exe", {"AV", "Kaspersky"}},
-            {"klwtpwrs.srv", {"AV", "Kaspersky"}},
-            {"kpf4ss.exe", {"Firewall", "Kerio Personal Firewall"}},
-            {"ksde.exe", {"Kaspersky Secure Connection", "VPN"}},
-            {"ksdeui.exe", {"Kaspersky Secure Connection", "VPN"}},
-            {"macmnsvc.exe", {"AV", "McAfee Endpoint Security"}},
-            {"masvc.exe", {"AV", "McAfee Endpoint Security"}},
-            {"mbae64.sys", {"AV", "Malwarebytes"}},
-            {"mbamagent.exe", {"AV", "Malwarebytes"}},
-            {"mbamservice.exe", {"AV", "Malwarebytes"}},
-            {"mbamswissarmy.sys", {"AV", "Malwarebytes"}},
-            {"mbamtray.exe", {"AV", "Malwarebytes"}},
-            {"mcshield.exe", {"AV", "McAfee VirusScan"}},
-            {"mdecryptservice.exe", {"Encryption", "McAfee Endpoint Encryption"}},
-            {"mdnsresponder.exe", {"Bonjour Service", "Network Service"}},
-            {"mfeann.exe", {"AV", "McAfee"}},
-            {"mfeepehost.exe", {"Encryption", "McAfee Endpoint Encryption"}},
-            {"mfefire.exe", {"HIPS", "McAfee Host Intrusion Prevention"}},
-            {"mfemactl.exe", {"Firewall", "McAfee Endpoint Security Firewall"}},
-            {"mfemms.exe", {"AV", "McAfee"}},
-            {"monitoringhost.exe", {"Microsoft Monitoring Agent", "Monitoring"}},
-            {"mpdefendercoreservice.exe", {"AV", "Windows Defender"}},
-            {"msascuil.exe", {"AV", "Windows Defender"}},
-            {"msmpeng.exe", {"AV", "Windows Defender"}},
-            {"msseces.exe", {"AV", "Microsoft Security Essentials"}},
-            {"mssense.exe", {"Microsoft Defender ATP (Advanced Threat Protection)", "Security"}},
-            {"mssense.exe", {"Microsoft Defender ATP", "Security"}},
-            {"nissrv.exe", {"AV Network Inspection", "Microsoft Security Essentials"}},
-            {"nortonsecurity.exe", {"AV", "Norton Antivirus"}},
-            {"npmdagent.exe", {"Network Monitoring", "SolarWinds NPM"}},
-            {"ns.exe", {"AV", "Norton Antivirus"}},
-            {"nsservice.exe", {"AV", "Norton Antivirus"}},
-            {"openvpnserv.exe", {"OpenVPN", "VPN"}},
-            {"outpost.exe", {"Agnitum Outpost Firewall", "Firewall"}},
-            {"panda_url_filtering.exe", {"AV", "Panda Security"}},
-            {"pangps.exe", {"Palo Alto Networks GlobalProtect", "VPN"}},
-            {"pavfnsvr.exe", {"AV", "Panda Security"}},
-            {"pavsrv.exe", {"AV", "Panda Security"}},
-            {"personalfirewallservice.exe", {"Firewall", "Trend Micro"}},
-            {"psanhost.exe", {"AV", "Panda Security"}},
-            {"realtimescanservice.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"rtvscan.exe", {"AV", "Symantec Endpoint Protection"}},
-            {"samplingservice.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"savservice.exe", {"AV", "Sophos Endpoint Security"}},
-            {"sbiesvc.exe", {"Sandboxie", "Security"}},
-            {"securityagentmonitor.exe", {"Antivirus/EDR", "Trend Micro"}},
-            {"securityhealthservice.exe",                    {"Security", "Windows Security Health Service"}},
-            {"securityhealthservice.exe", {"Windows Security Health Service", "Security"}},
-            {"securityhealthsystray.exe", {"Windows Security Systray", "Security"}},
-            {"senseir.exe", {"Windows Defender IR", "Security"}},
-            {"sensendr.exe", {"Windows Defender NDR", "Security"}},
-            {"sensetvm.exe", {"Windows Defender TVM", "Security"}},
-            {"sentinel.exe", {"EDR", "Unknown (Potential: Microsoft Defender)"}},
-            {"sentinelagent.exe", {"EDR", "SentinelOne"}},
-            {"sentinelagent.exe", {"SentinelOne", "EDR"}},
-            {"sentinelctl.exe", {"EDR", "SentinelOne"}},
-            {"sentinelmemoryscanner.exe", {"SentinelOne", "EDR"}},
-            {"sentinelservicehost.exe", {"SentinelOne", "EDR"}},
-            {"sentinelstaticengine.exe", {"SentinelOne", "EDR"}},
-            {"sentinelstaticenginescanner.exe", {"SentinelOne", "EDR"}},
-            {"sgrmbroker.exe", {"Windows Integrity Management", "System Integrity"}},
-            {"shstat.exe", {"AV", "McAfee VirusScan"}},
-            {"smsvchost.exe", {"Application", "Microsoft .NET Framework"}},
-            {"sophosav.exe", {"AV", "Sophos Endpoint Security"}},
-            {"sophosclean.exe", {"AV", "Sophos"}},
-            {"sophoshealth.exe", {"AV", "Sophos"}},
-            {"sophossps.exe", {"AV", "Sophos Endpoint Security"}},
-            {"sophosui.exe", {"AV", "Sophos Endpoint Security"}},
-            {"sysmon.exe", {"Microsoft Sysmon", "Security"}},
-            {"sysmon64.exe", {"Microsoft Sysmon", "Security"}},
-            {"tanclient.exe", {"EDR", "Tanium EDR"}},
-            {"telemetryagentservice.exe", {"Telemetry", "Trend Micro"}},
-            {"telemetryservice.exe", {"Telemetry", "Unknown"}},
-            {"tmntsrv.exe", {"AV", "Trend Micro OfficeScan"}},
-            {"tmproxy.exe", {"AV", "Trend Micro OfficeScan"}},
-            {"traps.exe", {"EDR", "Palo Alto Networks (Cortex XDR)"}},
-            {"trapsagent.exe", {"Palo Alto Networks Cortex XDR", "XDR"}},
-            {"trapsd.exe", {"Palo Alto Networks Cortex XDR", "XDR"}},
-            {"truecrypt.exe", {"Encryption", "TrueCrypt"}},
-            {"uiwinmgr.exe", {"AV", "Trend Micro"}},
-            {"updatesrv.exe", {"AV", "Bitdefender"}},
-            {"vgauthservice.exe", {"VMware", "Virtualization"}},
-            {"vm3dservice.exe", {"VMware", "Virtualization"}},
-            {"vmtoolsd.exe", {"VMware", "Virtualization"}},
-            {"vpnagent.exe", {"Cisco AnyConnect Secure Mobility Client", "VPN"}},
-            {"vpnagent.exe", {"Cisco AnyConnect", "VPN"}},
-            {"vpnui.exe", {"Cisco AnyConnect", "VPN"}},
-            {"vsserv.exe", {"AV", "Bitdefender Total Security"}},
-            {"vulnerabilityprotectionagent.exe",                    {"Trend Micro", "Vulnerability Protection"}},
-            {"windefend.exe", {"AV", "Windows Defender"}},
-            {"winlogbeat.exe", {"Elastic Winlogbeat", "Security"}},
-            {"wireguard.exe", {"VPN", "WireGuard"}},
-            {"wrsa.exe", {"AV", "Webroot Anywhere"}},
-            {"wscservice.exe", {"Security Service", "Trend Micro"}},
-            {"xagt.exe", {"FireEye HX", "Security"}},
+    // Diccionario proceso -> lista de posibles productos
+    // NOTA: claves SIEMPRE en minúsculas.
+    const std::unordered_map<std::string, std::vector<SecuritySoftware>> securitySoftwareProcesses = {
+
+            // --- Cisco / Zscaler / VPN / Proxy / SASE ---
+            {"vpnagent.exe", {
+                                     {"Cisco AnyConnect Secure Mobility Client", "VPN"},
+                                     {"Cisco AnyConnect", "VPN"}
+                             }},
+            {"vpnui.exe", {
+                                     {"Cisco AnyConnect", "VPN"}
+                             }},
+            {"concentr.exe", {
+                                     {"Palo Alto Networks GlobalProtect", "VPN"}
+                             }},
+            {"pangps.exe", {
+                                     {"Palo Alto Networks GlobalProtect", "VPN"}
+                             }},
+            {"fortitray.exe", {
+                                     {"Fortinet FortiClient / FortiTray (System Tray Controller)", "VPN / Endpoint Security"}
+                             }},
+            {"fortivpn.exe", {
+                                     {"Fortinet FortiClient VPN", "VPN"}
+                             }},
+            {"zsatray.exe", {
+                                     {"Zscaler Client Connector (Zscaler ZTNA / Secure Web Gateway)", "Proxy / CASB / ZTNA"}
+                             }},
+            {"zsatraymanager.exe", {
+                                     {"Zscaler Client Connector (privileged service)", "Proxy / CASB / ZTNA"}
+                             }},
+            {"ksde.exe", {
+                                     {"Kaspersky Secure Connection", "VPN"}
+                             }},
+            {"ksdeui.exe", {
+                                     {"Kaspersky Secure Connection", "VPN"}
+                             }},
+            {"wireguard.exe", {
+                                     {"WireGuard", "VPN"}
+                             }},
+            {"openvpnserv.exe", {
+                                     {"OpenVPN", "VPN"}
+                             }},
+
+            // --- CrowdStrike Falcon ---
+            {"csfalconservice.exe", {
+                                     {"CrowdStrike Falcon Sensor", "EDR / XDR"}
+                             }},
+            {"csfalconcontainer.exe", {
+                                     {"CrowdStrike Falcon Sensor Container", "EDR / XDR"}
+                             }},
+            {"csfalcondaterepair.exe", {
+                                     {"CrowdStrike Falcon Repair Component", "EDR / XDR"}
+                             }},
+
+            // --- Microsoft Defender / MDE ---
+            {"msmpeng.exe", {
+                                     {"Microsoft Defender Antivirus Engine", "AV"}
+                             }},
+            {"mssense.exe", {
+                                     {"Microsoft Defender for Endpoint (MDE / ATP)", "EDR"}
+                             }},
+            {"senseir.exe", {
+                                     {"Microsoft Defender IR component", "Security / IR"}
+                             }},
+            {"sensendr.exe", {
+                                     {"Microsoft Defender NDR component", "Security / NDR"}
+                             }},
+            {"sensetvm.exe", {
+                                     {"Microsoft Defender TVM (Threat & Vulnerability Mgmt)", "Vuln Mgmt"}
+                             }},
+            {"mpdefendercoreservice.exe", {
+                                     {"Microsoft Defender Core Service", "AV"}
+                             }},
+            {"windefend.exe", {
+                                     {"Microsoft Defender AV Service", "AV"}
+                             }},
+            {"msascuil.exe", {
+                                     {"Windows Defender UI", "AV UI"}
+                             }},
+            {"securityhealthservice.exe", {
+                                     {"Windows Security Health Service", "Security / Health"}
+                             }},
+            {"securityhealthsystray.exe", {
+                                     {"Windows Security Systray", "Security / Health"}
+                             }},
+
+            // --- Sysmon (telemetría avanzada) ---
+            {"sysmon.exe", {
+                                     {"Microsoft Sysmon", "Security Telemetry"}
+                             }},
+            {"sysmon64.exe", {
+                                     {"Microsoft Sysmon (64-bit)", "Security Telemetry"}
+                             }},
+
+            // --- SentinelOne ---
+            {"sentinelagent.exe", {
+                                     {"SentinelOne Agent", "EDR / XDR"}
+                             }},
+            {"sentinelctl.exe", {
+                                     {"SentinelOne Control CLI", "EDR / XDR"}
+                             }},
+            {"sentinelservicehost.exe", {
+                                     {"SentinelOne Service Host", "EDR / XDR"}
+                             }},
+            {"sentinelstaticengine.exe", {
+                                     {"SentinelOne Static Engine", "EDR / XDR"}
+                             }},
+            {"sentinelstaticenginescanner.exe", {
+                                     {"SentinelOne Static Engine Scanner", "EDR / XDR"}
+                             }},
+            {"sentinelmemoryscanner.exe", {
+                                     {"SentinelOne Memory Scanner", "EDR / XDR"}
+                             }},
+
+            // --- Palo Alto Networks Cortex XDR (antes Traps / Cyvera) ---
+            {"cyserver.exe", {
+                                     {"Palo Alto Networks Cortex XDR Agent (protected service)", "EDR / XDR"}
+                             }},
+            {"cyveraconsole.exe", {
+                                     {"Palo Alto Networks Cortex XDR Console", "EDR / XDR"}
+                             }},
+            {"cyveraservice.exe", {
+                                     {"Palo Alto Networks Cortex XDR Service (legacy CyveraService)", "EDR / XDR"}
+                             }},
+            {"cyvragentsvc.exe", {
+                                     {"Palo Alto Networks Cortex XDR Agent Service", "EDR / XDR"}
+                             }},
+            {"cyvrfsflt.exe", {
+                                     {"Palo Alto Networks Cortex XDR FS Filter", "EDR / XDR"}
+                             }},
+            {"traps.exe", {
+                                     {"Palo Alto Networks Cortex XDR (Traps)", "EDR / XDR"}
+                             }},
+            {"trapsagent.exe", {
+                                     {"Palo Alto Networks Cortex XDR (Traps Agent)", "EDR / XDR"}
+                             }},
+            {"trapsd.exe", {
+                                     {"Palo Alto Networks Cortex XDR Daemon", "EDR / XDR"}
+                             }},
+
+            // --- Elastic (Elastic Defend / Elastic Agent) ---
+            {"elastic-endpoint.exe", {
+                                     {"Elastic Defend / Elastic Endpoint", "EDR / Telemetry"}
+                             }},
+            {"endpoint-security.exe", {
+                                     {"Elastic Endpoint Security Component", "EDR / Telemetry"}
+                             }},
+            {"elastic-agent.exe", {
+                                     {"Elastic Agent (Fleet / telemetry / security)", "EDR / Telemetry / UEM"}
+                             }},
+
+            // --- Tanium ---
+            {"taniumclient.exe", {
+                                     {"Tanium Client (IR / EDR / Asset Visibility)", "EDR / Asset Mgmt / IR"}
+                             }},
+            {"tanclient.exe", {
+                                     {"Tanium EDR Client (legacy name)", "EDR / IR"}
+                             }},
+
+            // --- Rapid7 Insight Agent ---
+            {"ir_agent.exe", {
+                                     {"Rapid7 Insight Agent", "EDR / Vulnerability / IR"}
+                             }},
+
+            // --- Qualys Cloud Agent ---
+            {"qualysagent.exe", {
+                                     {"Qualys Cloud Agent", "Vuln Mgmt / Compliance"}
+                             }},
+            {"qualysagentui.exe", {
+                                     {"Qualys Cloud Agent UI", "Vuln Mgmt / Compliance"}
+                             }},
+
+            // --- Trend Micro / Apex One / OfficeScan ---
+            {"tmlisten.exe", {
+                                     {"Trend Micro AV / Apex One Core", "AV / EDR"}
+                             }},
+            {"ntrtscan.exe", {
+                                     {"Trend Micro Real-Time Scan Engine", "AV / EDR"}
+                             }},
+            {"tmproxy.exe", {
+                                     {"Trend Micro Network Traffic Scanner / Proxy filter", "AV / Network Filter"}
+                             }},
+            {"tmntsrv.exe", {
+                                     {"Trend Micro OfficeScan / Apex One Service", "AV / EDR"}
+                             }},
+            {"tmproxy.exe", {
+                                     {"Trend Micro OfficeScan Proxy", "AV / Network Filter"}
+                             }},
+            {"personalfirewallservice.exe", {
+                                     {"Trend Micro Personal Firewall", "Firewall"}
+                             }},
+            {"coreserviceshell.exe", {
+                                     {"Trend Micro Core Service Shell", "AV / EDR"}
+                             }},
+            {"clientcommunicationservice.exe", {
+                                     {"Trend Micro Client Communication Service", "AV / EDR"}
+                             }},
+            {"clientlogservice.exe", {
+                                     {"Trend Micro Client Log Service", "AV / EDR"}
+                             }},
+            {"clientsolutionframework.exe", {
+                                     {"Trend Micro Client Solution Framework", "AV / EDR"}
+                             }},
+            {"endpointbasecamp.exe", {
+                                     {"Trend Micro Endpoint Basecamp", "EDR"}
+                             }},
+            {"realtimescanservice.exe", {
+                                     {"Trend Micro RealTime Scan Service", "AV / EDR"}
+                             }},
+            {"samplingservice.exe", {
+                                     {"Trend Micro Sampling Service", "AV / EDR"}
+                             }},
+            {"telemetryagentservice.exe", {
+                                     {"Trend Micro Telemetry Agent Service", "Telemetry"}
+                             }},
+            {"telemetryservice.exe", {
+                                     {"Trend Micro Telemetry Service", "Telemetry"}
+                             }},
+            {"vulnerabilityprotectionagent.exe", {
+                                     {"Trend Micro Vulnerability Protection Agent", "Vuln Mgmt"}
+                             }},
+            {"wscservice.exe", {
+                                     {"Trend Micro Security Service", "AV / EDR"}
+                             }},
+
+            // --- McAfee / Trellix ---
+            {"macmnsvc.exe", {
+                                     {"McAfee Agent Common Service", "AV / EDR"}
+                             }},
+            {"masvc.exe", {
+                                     {"McAfee Agent Service", "AV / EDR"}
+                             }},
+            {"mfemms.exe", {
+                                     {"McAfee Endpoint Security / McAfee Management Service", "AV / EDR"}
+                             }},
+            {"mfefire.exe", {
+                                     {"McAfee Host Intrusion Prevention / Firewall", "HIPS / Firewall"}
+                             }},
+            {"mfemactl.exe", {
+                                     {"McAfee Endpoint Security Firewall Controller", "Firewall"}
+                             }},
+            {"mcshield.exe", {
+                                     {"McAfee VirusScan / On-Access Scanner", "AV"}
+                             }},
+            {"shstat.exe", {
+                                     {"McAfee VirusScan Status Monitor", "AV UI"}
+                             }},
+            {"edpa.exe", {
+                                     {"McAfee Endpoint Security / DLP Agent", "AV / DLP"}
+                             }},
+            {"dlpsensor.exe", {
+                                     {"McAfee DLP Sensor", "DLP"}
+                             }},
+            {"mfeepehost.exe", {
+                                     {"McAfee Endpoint Encryption Host", "Disk Encryption"}
+                             }},
+            {"mdecryptservice.exe", {
+                                     {"McAfee Endpoint Encryption Decrypt Service", "Disk Encryption"}
+                             }},
+
+            // --- Symantec / Broadcom / Norton ---
+            {"ccsvchst.exe", {
+                                     {"Symantec Endpoint Protection / Norton Security", "AV / EDR"}
+                             }},
+            {"rtvscan.exe", {
+                                     {"Symantec Endpoint Protection", "AV"}
+                             }},
+            {"dlpagent.exe", {
+                                     {"Symantec DLP Agent", "DLP"}
+                             }},
+            {"nortonsecurity.exe", {
+                                     {"Norton Security", "AV"}
+                             }},
+            {"ns.exe", {
+                                     {"Norton Security", "AV"}
+                             }},
+            {"nsservice.exe", {
+                                     {"Norton Security Service", "AV"}
+                             }},
+
+            // --- Sophos ---
+            {"savservice.exe", {
+                                     {"Sophos Endpoint Security / SAVService", "AV / EDR"}
+                             }},
+            {"sophosav.exe", {
+                                     {"Sophos Endpoint AV", "AV"}
+                             }},
+            {"sophosclean.exe", {
+                                     {"Sophos Clean", "AV / Remediation"}
+                             }},
+            {"sophoshealth.exe", {
+                                     {"Sophos Health", "AV / Telemetry"}
+                             }},
+            {"sophossps.exe", {
+                                     {"Sophos SophosSps (Exploit Mitigation / Sophos Endpoint Defense)", "EDR / Exploit Guard"}
+                             }},
+            {"sophosui.exe", {
+                                     {"Sophos UI", "AV UI"}
+                             }},
+
+            // --- Kaspersky ---
+            {"avp.exe", {
+                                     {"Kaspersky AV / Kaspersky Endpoint Security", "AV / EDR"}
+                             }},
+            {"avpui.exe", {
+                                     {"Kaspersky UI", "AV UI"}
+                             }},
+            {"klwtblfs.exe", {
+                                     {"Kaspersky", "AV / File System Filter"}
+                             }},
+
+            // --- ESET ---
+            {"egui.exe", {
+                                     {"ESET NOD32 / ESET Endpoint Security GUI", "AV UI"}
+                             }},
+            {"ekrn.exe", {
+                                     {"ESET NOD32 / ESET Endpoint Security Kernel Service", "AV / EDR"}
+                             }},
+
+            // --- Bitdefender ---
+            {"bdagent.exe", {
+                                     {"Bitdefender Total Security Agent", "AV"}
+                             }},
+            {"bdntwrk.exe", {
+                                     {"Bitdefender Network Protection", "AV / Network"}
+                             }},
+            {"updatesrv.exe", {
+                                     {"Bitdefender Update Service", "AV"}
+                             }},
+            {"vsserv.exe", {
+                                     {"Bitdefender Virus Shield Service", "AV"}
+                             }},
+
+            // --- Avast / AVG / Panda / Webroot / etc. ---
+            {"aswidsagent.exe", {
+                                     {"Avast IDS Agent", "AV / IDS"}
+                             }},
+            {"avastsvc.exe", {
+                                     {"Avast AV Service", "AV"}
+                             }},
+            {"avastui.exe", {
+                                     {"Avast UI", "AV UI"}
+                             }},
+            {"avgnt.exe", {
+                                     {"Avira AV Guard UI", "AV UI"}
+                             }},
+            {"avguard.exe", {
+                                     {"Avira AV Guard", "AV"}
+                             }},
+            {"pavsrv.exe", {
+                                     {"Panda Security AV Service", "AV"}
+                             }},
+            {"pavfnsvr.exe", {
+                                     {"Panda AV File Name Server", "AV"}
+                             }},
+            {"psanhost.exe", {
+                                     {"Panda Security Advanced Protection Host", "AV / EDR"}
+                             }},
+            {"panda_url_filtering.exe", {
+                                     {"Panda URL Filtering", "Web Filter"}
+                             }},
+            {"wrsa.exe", {
+                                     {"Webroot SecureAnywhere", "AV / EDR"}
+                             }},
+
+            // --- FireEye / Trellix HX ---
+            {"xagt.exe", {
+                                     {"FireEye Endpoint Agent / Trellix HX Agent", "EDR / IR"}
+                             }},
+            {"firesvc.exe", {
+                                     {"FireEye Endpoint Agent Service", "EDR / IR"}
+                             }},
+            {"firetray.exe", {
+                                     {"FireEye Endpoint Agent Tray", "EDR / IR"}
+                             }},
+
+            // --- Check Point / Others ---
+            {"fw.exe", {
+                                     {"Check Point Firewall", "Firewall"}
+                             }},
+            {"cpd.exe", {
+                                     {"Check Point Daemon", "Security"}
+                             }},
+
+            // --- Trend Micro Application Control / HIPS ---
+            {"appcontrolagent.exe", {
+                                     {"Trend Micro Application Control Agent", "Application Control"}
+                             }},
+            {"hips.exe", {
+                                     {"Host Intrusion Prevention System", "HIPS"}
+                             }},
+
+            // --- Data Loss Prevention / cifrado disco / control acceso ---
+            {"dlpsensor.exe", {
+                                     {"McAfee DLP Sensor", "DLP"}
+                             }},
+            {"dlpagent.exe", {
+                                     {"Symantec DLP Agent", "DLP"}
+                             }},
+            {"axcrypt.exe", {
+                                     {"AxCrypt", "Encryption"}
+                             }},
+            {"truecrypt.exe", {
+                                     {"TrueCrypt", "Encryption"}
+                             }},
+            {"eegoservice.exe", {
+                                     {"McAfee Endpoint Encryption Service", "Disk Encryption"}
+                             }},
+
+            // --- Monitoring / Telemetry corporativa ---
+            {"healthservice.exe", {
+                                     {"Microsoft OMS / SCOM HealthService", "Monitoring"}
+                             }},
+            {"monitoringhost.exe", {
+                                     {"Microsoft Monitoring Agent", "Monitoring"}
+                             }},
+            {"npmdagent.exe", {
+                                     {"SolarWinds NPM Agent", "Network Monitoring"}
+                             }},
+
+            // --- VMware guest tools (útil para saber si estás en VM) ---
+            {"vgauthservice.exe", {
+                                     {"VMware VGAuthService", "Virtualization / Guest Tools"}
+                             }},
+            {"vm3dservice.exe", {
+                                     {"VMware 3D Service", "Virtualization / Guest Tools"}
+                             }},
+            {"vmtoolsd.exe", {
+                                     {"VMware Tools Daemon", "Virtualization / Guest Tools"}
+                             }},
+
+            // --- Beats varios de Windows Defender avanzado ---
+            {"sgrmbroker.exe", {
+                                     {"Windows System Guard Runtime Monitor Broker", "System Integrity"}
+                             }},
+            {"securityhealthservice.exe", {
+                                     {"Windows Security Health Service", "Security / Health"}
+                             }},
+            {"securityhealthsystray.exe", {
+                                     {"Windows Security Systray", "Security / Health"}
+                             }},
+
+            // --- Otros heredados que ya tenías ---
+            {"cmrcservice.exe", {
+                                     {"Microsoft Configuration Manager Remote Control Service", "Remote Control"}
+                             }},
+            {"sbiesvc.exe", {
+                                     {"Sandboxie Service", "Sandbox / Isolation"}
+                             }},
+            {"winlogbeat.exe", {
+                                     {"Elastic Winlogbeat (log forwarder)", "Security Telemetry"}
+                             }},
+            {"mdnsresponder.exe", {
+                                     {"Bonjour Service", "Network Service / mDNS"}
+                             }},
+            {"smsvchost.exe", {
+                                     {"Microsoft .NET Framework service host", "Application"}
+                             }}
     };
 
     bool found = false;
@@ -204,11 +527,24 @@ bool isSecuritySoftwareRunning() {
         std::string processName(pe32.szExeFile);
         std::string lowerCaseProcessName = toLower(processName);
 
+        // ¿ya se reportó este proceso?
         if (detectedProcesses.find(lowerCaseProcessName) == detectedProcesses.end()) {
+
             auto it = securitySoftwareProcesses.find(lowerCaseProcessName);
             if (it != securitySoftwareProcesses.end()) {
                 found = true;
-                std::cout << "Security Software detected: " << it->second.name << " (" << it->second.type << ") - Process: " << processName << std::endl;
+
+                // imprime TODAS las asociaciones conocidas
+                for (const auto& sw : it->second) {
+                    std::cout
+                            << "Security Software detected: "
+                            << sw.name
+                            << " (" << sw.type << ")"
+                            << " - Process: " << processName
+                            << std::endl;
+                }
+
+                // marca como ya reportado para no repetir
                 detectedProcesses.insert(lowerCaseProcessName);
             }
         }
@@ -220,10 +556,15 @@ bool isSecuritySoftwareRunning() {
 
 int main() {
     std::cout << "AV_detect Version: " << VERSION << std::endl;
+
     if (isSecuritySoftwareRunning()) {
-        std::cout << "\nFound security software process (AV, anti-malware, EDR, XDR, etc.) running." << std::endl;
+        std::cout
+                << "\nFound security software process (AV, anti-malware, EDR, XDR, etc.) running."
+                << std::endl;
     } else {
-        std::cout << "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running." << std::endl;
+        std::cout
+                << "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running."
+                << std::endl;
     }
     return 0;
 }

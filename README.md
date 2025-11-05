@@ -1,131 +1,209 @@
-# Security Software Detector
-This program detects if any security software (AV, EDR, XDR, firewall, etc.) is running on the system. The program searches the list of running processes and compares their names with a predefined list of known security software processes.
 
-# Requirements
-A C++17 or later compatible compiler.
-Windows as the operating system.
+# Security Software Detector (av_detect)
 
-# Compilation
-Open a terminal or command prompt.
-Navigate to the directory where the main.cpp file is located.
-Compile the program using CLion, also a C++17 or later compatible compiler. For example, to compile with g++, execute the following command:
-```
-g++ -std=c++17 -o av_detect main.cpp
-```
-This will create an executable file named av_detect.exe in the same directory.
+Detects if security software (AV, EDR, XDR, firewall, VPN, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of well-known agent executables.
 
-## Detected Apps
+* **Version:** `v2.00`
+* **Scope:** Process-name based heuristic, no admin required.
+* **Use cases:** DFIR triage, Red Team reconnaissance, IT asset survey.
 
-The program detects the following security software processes:
+## What’s new in v2.00
 
-- Absolute Persistence (`acnamagent.exe`) - Asset Management
-- Absolute Persistence (`acnamlogonagent.exe`) - Asset Management
-- Adobe (`AGMService.exe`) - Telemetry
-- Adobe (`AGSService.exe`) - Telemetry
-- Agnitum Outpost Firewall - Firewall
-- Avast (`aswidsagent.exe`, `avastsvc.exe`, `avastui.exe`) - AV
-- Avira (`avgnt.exe`, `avguard.exe`) - AV
-- AxCrypt (`axcrypt.exe`) - Encryption
-- Bitdefender (`bdntwrk.exe`, `updatesrv.exe`) - AV
-- Bitdefender Total Security (`bdagent.exe`, `vsserv.exe`) - AV
-- Check Point Daemon (`cpd.exe`) - Security
-- Check Point Firewall (`fw.exe`) - Firewall
-- Cisco AnyConnect (`vpnagent.exe`, `vpnui.exe`) - VPN
-- Cisco AnyConnect Secure Mobility Client (`vpnagent.exe`) - VPN
-- Cisco Umbrella Roaming Security (`aciseagent.exe`, `acumbrellaagent.exe`) - Security DNS
-- CmRcService (`CmRcService.exe`) - Remote Control
-- CrowdStrike Falcon (`csfalconcontainer.exe`, `csfalcondaterepair.exe`, `csfalconservice.exe`) - EDR
-- CrowdStrike Falcon Insight XDR (`cbcomms.exe`) - XDR
-- Cybereason EDR (`cybereason.exe`) - EDR
-- Cytomic Orion (`cytomicendpoint.exe`) - Security
-- Darktrace (`DarktraceTSA.exe`) - EDR
-- DriveSentry (`dsmonitor.exe`, `dwengine.exe`) - Security
-- ESET NOD32 AV (`egui.exe`, `ekrn.exe`) - AV
-- Elastic Winlogbeat (`winlogbeat.exe`) - Security
-- FireEye Endpoint Agent (`firesvc.exe`, `firetray.exe`) - Security
-- FireEye HX (`xagt.exe`) - Security
-- FortiEDR (`fortiedr.exe`) - EDR
-- Host Intrusion Prevention System (`hips.exe`) - HIPS
-- Kaspersky (`avp.exe`, `avpui.exe`, `klwtblfs.exe`, `klwtpwrs.srv`) - AV
-- Kaspersky Secure Connection (`ksde.exe`, `ksdeui.exe`) - VPN
-- Kerio Personal Firewall (`kpf4ss.exe`) - Firewall
-- Malwarebytes (`mbae64.sys`, `mbamservice.exe`, `mbamswissarmy.sys`, `mbamtray.exe`) - AV
-- McAfee (`mfeann.exe`, `mfemms.exe`, `masvc.exe`, `macmnsvc.exe`) - AV
-- McAfee DLP Sensor (`dlpsensor.exe`) - DLP
-- McAfee Endpoint Encryption (`eegoservice.exe`, `mdecryptservice.exe`, `mfeepehost.exe`) - Encryption
-- McAfee Endpoint Security (`edpa.exe`, `shstat.exe`, `mcshield.exe`, `mfefire.exe`, `mfemactl.exe`, `mfemms.exe`) - AV
-- McAfee Endpoint Security Firewall (`mfemactl.exe`) - Firewall
-- McAfee Host Intrusion Prevention (`mfefire.exe`) - HIPS
-- McAfee VirusScan (`mcshield.exe`, `shstat.exe`) - AV
-- Microsoft .NET Framework (`SMSvcHost.exe`) - Application
-- Microsoft Defender ATP (`mssense.exe`) - Security
-- Microsoft Monitoring Agent (`MonitoringHost.exe`) - Monitoring
-- Microsoft OMS (`HealthService.exe`) - Monitoring
-- Microsoft Security Essentials (`msseces.exe`, `nissrv.exe`) - AV
-- Microsoft Sysmon (`sysmon.exe`, `sysmon64.exe`) - Security
-- Norton Antivirus (`ccSvcHst.exe`, `nortonsecurity.exe`, `ns.exe`, `nsservice.exe`) - AV
-- OpenVPN (`openvpnserv.exe`) - VPN
-- Palo Alto Networks (Cyvera) (`CyveraConsole.exe`, `CyveraService.exe`) - EDR
-- Palo Alto Networks Cortex XDR (`CyvrAgentSvc.exe`, `CyvrFsFlt.exe`, `trapsagent.exe`, `trapsd.exe`) - XDR
-- Palo Alto Networks GlobalProtect (`concentr.exe`, `pangps.exe`) - VPN
-- Panda Security (`panda_url_filtering.exe`, `pavfnsvr.exe`, `pavsrv.exe`, `psanhost.exe`) - AV
-- Sandboxie (`sbiesvc.exe`) - Security
-- SecurityHealthService (`SecurityHealthService.exe`) - Windows Security Health Service
-- SentinelOne (`Sentinel.exe`, `SentinelAgent.exe`, `SentinelCtl.exe`) - EDR
-- SentinelOne Singularity XDR (`cpx.exe`) - XDR
-- SolarWinds NPM (`NPMDAgent.exe`) - Network Monitoring
-- Sophos (`savservice.exe`, `sophosav.exe`, `sophossps.exe`, `sophosui.exe`, `SophosClean.exe`, `SophosHealth.exe`) - AV
-- Symantec DLP Agent (`dlpagent.exe`) - DLP
-- Symantec Endpoint Protection (`ccsvchst.exe`, `rtvscan.exe`) - AV
-- Tanium EDR (`tanclient.exe`) - EDR
-- Trend Micro (`AppControlAgent.exe`, `BrowserExploitDetection.exe`, `ClientCommunicationService.exe`, `ClientLogService.exe`, `ClientSolutionFramework.exe`, `DataProtectionService.exe`, `EndpointBasecamp.exe`, `PersonalFirewallService.exe`, `RealTimeScanService.exe`, `SamplingService.exe`, `SecurityAgentMonitor.exe`, `TelemetryAgentService.exe`, `coreServiceShell.exe`, `uiWinMgr.exe`, `tmntsrv.exe`, `tmproxy.exe`) - AV, EDR, Application Control, Exploit Detection, Data Protection, Firewall, Security Service, Vulnerability Protection, Telemetry
-- TrueCrypt (`truecrypt.exe`) - Encryption
-- VMware (`VGAuthService.exe`, `vm3dservice.exe`, `vmtoolsd.exe`) - Virtualization
-- VMware Carbon Black EDR (`carbonsensor.exe`) - EDR
-- Webroot Anywhere (`wrsa.exe`) - AV
-- Windows Defender (`msascuil.exe`, `msmpeng.exe`, `windefend.exe`) - AV
-- WireGuard (`wireguard.exe`) - VPN
-- mDNSResponder (Bonjour Service) - Network Service
+* **Broader coverage (2024–2025 enterprise stack):** Elastic Defend/Agent, CrowdStrike Falcon service, SentinelOne extended set, Cortex XDR (modern services), Zscaler Client Connector, Fortinet FortiClient/FortiTray, Tanium, Rapid7 Insight Agent, Qualys Cloud Agent, Trend Micro Apex/OfficeScan core engines, etc.
+* **Multi-mapping per process:** one process name can map to multiple products/vendors (e.g., shared services).
+* **De-duplication:** each process printed once, listing all known product mappings.
+* **UTF-8 console output** for consistent rendering.
 
 
-# Usage
-Execute the compiled program in a terminal or command prompt. The program will show if any security software is detected running on the system.
 
-```
-./av_detect.exe
-```
-The program will display "Security software is running." if any security software is detected, and "No security software detected." otherwise.
+## Requirements
 
-![img.png](img.png)
+* **OS:** Windows.
+* **Compiler:** C++17 or later (MSVC, MinGW-w64 g++, clang-cl).
+* **SDK:** Windows SDK headers/libs available (for `CreateToolhelp32Snapshot`).
 
-# Alternative usage using only PowerShell, without using the executable
 
-You can use a PowerShell command to directly interact with the CSV hosted on GitHub, without the need to download the project or compile it.
 
-The original command uses the `[PSCustomObject]` notation to create a custom object directly and add it to `$FoundProcesses`. 
-However, this notation caused errors in restrictive environments, so an alternative approach with `Select-Object` was used.
+## Build / Compilation
 
-> Red Teamers, be carefull. EDRs can identify the powershell command as tasklist activity. To avoid this compile or use compiled version.
- 
-```
-$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in $ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') }; if ($runningProcess) { $ProcessInfo = "" | Select-Object Process, Name, Type; $ProcessInfo.Process = $runningProcess.ProcessName; $ProcessInfo.Name = $process.Name; $ProcessInfo.Type = $process.Type; $FoundProcesses += $ProcessInfo; } }; $FoundProcesses | Format-Table; Write-Output "`nIf you want to contribute to the project, please open issue in https://github.com/nand0san/av_detect with a txt file like 'Get-Process > my_processes.txt' and will check if any new process can be added to the tool. Thank you!"
-```
-Output example:
-```
-$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv"; $ProcessesCSV = Invoke-WebRequest -Uri 
-$Url -UseBasicParsing | ConvertFrom-Csv; $RunningProcesses = Get-Process; $FoundProcesses = @(); foreach ($process in 
-$ProcessesCSV) { $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process
-.Replace('.exe','') }; if ($runningProcess) { $ProcessInfo = "" | Select-Object Process, Name, Type; 
-$ProcessInfo.Process = $runningProcess.ProcessName; $ProcessInfo.Name = $process.Name; $ProcessInfo.Type = 
-$process.Type; $FoundProcesses += $ProcessInfo; } }; $FoundProcesses | Format-Table
+### MSVC (Developer Command Prompt)
 
-Process                Name                        Type
--------                ----                        ----
-avp                    Kaspersky                   AV
-
+```bat
+cl /std:c++17 /O2 /W3 /EHsc av_detect.cpp /link /SUBSYSTEM:CONSOLE
 ```
 
-# How it Works
-The program uses the CreateToolhelp32Snapshot function from the Windows API to obtain a list of all running processes on the system. It then compares the name of each process with a predefined list of known security software processes. If it finds a match, the program considers that security software is running on the system.
+### MinGW-w64 g++
 
-The list of security software processes is located in the main.cpp file in the securitySoftwareProcesses dictionary. You can add, remove, or modify entries in this dictionary as needed.
+```bash
+g++ -std=c++17 -O2 -Wall -o av_detect.exe av_detect.cpp
+```
+
+### CMake (optional)
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(av_detect CXX)
+set(CMAKE_CXX_STANDARD 17)
+add_executable(av_detect av_detect.cpp)
+```
+
+```bash
+cmake -S . -B build
+cmake --build build --config Release
+```
+
+> Tip (Blue Team): if you need fewer AV heuristics from SmartScreen/Defender on internal use, sign the binary with a code-signing cert (`signtool sign /fd SHA256 /a av_detect.exe`).
+
+
+
+## Usage
+
+```bash
+.\av_detect.exe
+```
+
+**Example output:**
+
+```
+AV_detect Version: v2.00
+Security Software detected: CrowdStrike Falcon Sensor (EDR / XDR) - Process: csfalconservice.exe
+Security Software detected: Microsoft Defender for Endpoint (MDE / ATP) (EDR) - Process: mssense.exe
+Security Software detected: Zscaler Client Connector (Zscaler ZTNA / Secure Web Gateway) (Proxy / CASB / ZTNA) - Process: zsatray.exe
+
+Found security software process (AV, anti-malware, EDR, XDR, etc.) running.
+```
+
+Exit code is always `0`; the tool reports findings via stdout.
+
+
+
+## How it Works
+
+* Uses `CreateToolhelp32Snapshot` to enumerate running processes.
+* Case-insensitive exact name match against an internal dictionary.
+* A single process name may map to **several** products/vendors; all are printed.
+* Each process is reported **once** to avoid noisy duplicates.
+
+**Limitations**
+
+* Process-name heuristics only: renamed binaries or protected/hidden processes may evade detection.
+* Does **not** enumerate Windows services/drivers or query product states/licensing.
+* No admin rights are required.
+
+
+
+## Detected Software (non-exhaustive but curated)
+
+> Process names are shown as detected (case-insensitive). This list reflects the built-in catalog in `av_detect v2.00`.
+
+* **Absolute Persistence** (`acnamagent.exe`, `acnamlogonagent.exe`) – Asset Management
+* **Adobe** (`agmservice.exe`, `agsservice.exe`) – Telemetry
+* **Agnitum Outpost Firewall** (`outpost.exe`) – Firewall
+* **Avast** (`aswidsagent.exe`, `avastsvc.exe`, `avastui.exe`) – AV
+* **Avira** (`avgnt.exe`, `avguard.exe`) – AV
+* **AxCrypt** (`axcrypt.exe`) – Encryption
+* **Bitdefender** (`bdntwrk.exe`, `updatesrv.exe`, `vsserv.exe`, `bdagent.exe`) – AV
+* **Check Point** (`cpd.exe`, `fw.exe`) – Security / Firewall
+* **Cisco AnyConnect** (`vpnagent.exe`, `vpnui.exe`) – VPN
+* **Cisco Umbrella Roaming** (`aciseagent.exe`, `acumbrellaagent.exe`) – Security DNS
+* **Configuration Manager Remote Control** (`cmrcservice.exe`) – Remote Control
+* **CrowdStrike Falcon** (`csfalconservice.exe`, `csfalconcontainer.exe`, `csfalcondaterepair.exe`, `cbcomms.exe`) – EDR / XDR
+* **Cybereason** (`cybereason.exe`) – EDR
+* **Cytomic Orion** (`cytomicendpoint.exe`) – Security
+* **Darktrace** (`darktracetsa.exe`) – EDR
+* **DriveSentry** (`dsmonitor.exe`, `dwengine.exe`) – Security
+* **ESET NOD32 / Endpoint** (`egui.exe`, `ekrn.exe`) – AV
+* **Elastic Defend / Endpoint** (`elastic-endpoint.exe`, `endpoint-security.exe`) – EDR / Telemetry
+* **Elastic Agent (Fleet)** (`elastic-agent.exe`) – EDR / Telemetry / UEM
+* **Elastic Winlogbeat** (`winlogbeat.exe`) – Security Telemetry
+* **FireEye Endpoint / Trellix HX** (`firesvc.exe`, `firetray.exe`, `xagt.exe`) – Security / EDR
+* **FortiEDR** (`fortiedr.exe`) – EDR
+* **Fortinet FortiClient / FortiTray** (`fortitray.exe`, `fortivpn.exe`) – VPN / Endpoint Security
+* **Host Intrusion Prevention System** (`hips.exe`) – HIPS
+* **Kaspersky** (`avp.exe`, `avpui.exe`, `klwtblfs.exe`) – AV
+* **Kaspersky Secure Connection** (`ksde.exe`, `ksdeui.exe`) – VPN
+* **Kerio Personal Firewall** (`kpf4ss.exe`) – Firewall
+* **Malwarebytes** (`mbae64.sys`, `mbamservice.exe`, `mbamswissarmy.sys`, `mbamtray.exe`) – AV
+* **McAfee / Trellix** (`macmnsvc.exe`, `masvc.exe`, `mfemms.exe`, `mfeann.exe`, `mcshield.exe`, `shstat.exe`,
+  `mfefire.exe`, `mfemactl.exe`, `edpa.exe`, `dlpsensor.exe`, `mfeepehost.exe`, `mdecryptservice.exe`) – AV / EDR / DLP / Firewall / Encryption
+* **Microsoft Defender AV** (`msmpeng.exe`, `msascuil.exe`, `windefend.exe`) – AV
+* **Microsoft Defender for Endpoint (MDE/ATP)** (`mssense.exe`, `senseir.exe`, `sensendr.exe`, `sensetvm.exe`, `mpdefendercoreservice.exe`) – EDR / TVM
+* **Microsoft Monitoring / OMS** (`monitoringhost.exe`, `healthservice.exe`) – Monitoring
+* **Microsoft Security Essentials** (`msseces.exe`, `nissrv.exe`) – AV
+* **Microsoft Sysmon** (`sysmon.exe`, `sysmon64.exe`) – Security Telemetry
+* **Norton / Symantec** (`ccsvchst.exe`, `rtvscan.exe`, `nortonsecurity.exe`, `ns.exe`, `nsservice.exe`) – AV
+* **OpenVPN** (`openvpnserv.exe`) – VPN
+* **Palo Alto Networks Cortex XDR (Cyvera/Traps)** (`cyserver.exe`, `cyveraservice.exe`, `cyveraconsole.exe`,
+  `cyvragentsvc.exe`, `cyvrfsflt.exe`, `traps.exe`, `trapsagent.exe`, `trapsd.exe`) – EDR / XDR
+* **Palo Alto Networks GlobalProtect** (`concentr.exe`, `pangps.exe`) – VPN
+* **Panda Security** (`panda_url_filtering.exe`, `pavfnsvr.exe`, `pavsrv.exe`, `psanhost.exe`) – AV
+* **Rapid7 Insight Agent** (`ir_agent.exe`) – EDR / Vulnerability / IR
+* **Sandboxie** (`sbiesvc.exe`) – Security
+* **Security Health** (`securityhealthservice.exe`, `securityhealthsystray.exe`) – Windows Security Health
+* **SentinelOne** (`sentinelagent.exe`, `sentinelctl.exe`, `sentinelservicehost.exe`,
+  `sentinelstaticengine.exe`, `sentinelstaticenginescanner.exe`, `sentinelmemoryscanner.exe`) – EDR / XDR
+* **SentinelOne Singularity XDR** (`cpx.exe`) – XDR
+* **SolarWinds NPM** (`npmdagent.exe`) – Network Monitoring
+* **Sophos** (`savservice.exe`, `sophosav.exe`, `sophossps.exe`, `sophosui.exe`, `sophosclean.exe`, `sophoshealth.exe`) – AV / EDR
+* **Tanium Client** (`taniumclient.exe`, `tanclient.exe`) – IR / EDR / Asset Mgmt
+* **Trend Micro Apex One / OfficeScan** (`tmlisten.exe`, `ntrtscan.exe`, `tmproxy.exe`, `tmntsrv.exe`,
+  `coreserviceshell.exe`, `clientcommunicationservice.exe`, `clientlogservice.exe`,
+  `clientsolutionframework.exe`, `endpointbasecamp.exe`, `personalfirewallservice.exe`,
+  `realtimescanservice.exe`, `samplingservice.exe`, `telemetryagentservice.exe`,
+  `telemetryservice.exe`, `wscservice.exe`, `dataprotectionservice.exe`, `uiwinmgr.exe`,
+  `browserexploitdetection.exe`, `appcontrolagent.exe`, `vulnerabilityprotectionagent.exe`) – AV / EDR / App Control / Exploit Detection / DLP / Firewall / Telemetry / Vuln
+* **TrueCrypt** (`truecrypt.exe`) – Encryption
+* **VMware Tools** (`vgauthservice.exe`, `vm3dservice.exe`, `vmtoolsd.exe`) – Virtualization
+* **Webroot** (`wrsa.exe`) – AV / EDR
+* **Windows System Guard** (`sgrmbroker.exe`) – System Integrity
+* **WireGuard** (`wireguard.exe`) – VPN
+* **Zscaler Client Connector** (`zsatray.exe`, `zsatraymanager.exe`) – Proxy / CASB / ZTNA
+* **mDNSResponder (Bonjour)** (`mdnsresponder.exe`) – Network Service
+
+> The catalog is evolving; contributions are welcome.
+
+
+
+## Alternative usage with pure PowerShell (no compilation)
+
+You can query the maintained CSV directly from GitHub and match against the running process list.
+
+> **Red Team note:** EDRs can flag this as `tasklist`/process enumeration activity. Prefer the compiled binary when stealth is required.
+
+```powershell
+$Url="https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv";
+$ProcessesCSV = Invoke-WebRequest -Uri $Url -UseBasicParsing | ConvertFrom-Csv;
+$RunningProcesses = Get-Process;
+$FoundProcesses = @();
+foreach ($process in $ProcessesCSV) {
+  $runningProcess = $RunningProcesses | Where-Object { $_.ProcessName -like $process.Process.Replace('.exe','') };
+  if ($runningProcess) {
+    $ProcessInfo = "" | Select-Object Process, Name, Type;
+    $ProcessInfo.Process = $runningProcess.ProcessName;
+    $ProcessInfo.Name = $process.Name;
+    $ProcessInfo.Type = $process.Type;
+    $FoundProcesses += $ProcessInfo;
+  }
+}
+$FoundProcesses | Format-Table;
+Write-Output "`nIf you want to contribute to the project, please open an issue in https://github.com/nand0san/av_detect with a txt file like 'Get-Process > my_processes.txt'. Thanks!"
+```
+
+
+
+## Contributing
+
+* Propose new entries with **process name(s)**, **product name**, and **category**.
+* Prefer vendor docs or stable artifacts seen in enterprise deployments.
+* Open a PR with:
+
+    * update to the internal dictionary in `av_detect.cpp`,
+    * (optional) update to `processes.csv`,
+    * a short rationale (links, screenshots, or telemetry snippets).
+
+
+
+## License
+
+MIT (unless the repository specifies otherwise).
+
