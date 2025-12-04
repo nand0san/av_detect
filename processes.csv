@@ -1,163 +1,190 @@
-Process, Name, Type
-"aciseagent.exe", "Cisco Umbrella Roaming Security", "Security DNS"
-"acnamagent.exe", "Absolute Persistence", "Asset Management"
-"acnamlogonagent.exe", "Absolute Persistence", "Asset Management"
-"acumbrellaagent.exe", "Cisco Umbrella Roaming Security", "Security DNS"
-"agmservice.exe", "Adobe", "Telemetry"
-"agsservice.exe", "Adobe", "Telemetry"
-"appcontrolagent.exe", "Application Control", "Trend Micro"
-"aswidsagent.exe", "AV", "Avast"
-"avastsvc.exe", "AV", "Avast"
-"avastui.exe", "AV", "Avast"
-"avgnt.exe", "AV", "Avira"
-"avguard.exe", "AV", "Avira"
-"avp.exe", "AV", "Kaspersky"
-"avpui.exe", "AV", "Kaspersky"
-"axcrypt.exe", "AxCrypt", "Encryption"
-"bdagent.exe", "AV", "Bitdefender Total Security"
-"bdntwrk.exe", "AV", "Bitdefender"
-"browserexploitdetection.exe", "Exploit Detection", "Trend Micro"
-"carbonsensor.exe", "EDR", "VMware Carbon Black EDR"
-"cbcomms.exe", "CrowdStrike Falcon Insight XDR", "XDR"
-"ccsvchst.exe", "AV", "Norton Antivirus"
-"ccsvchst.exe", "AV", "Symantec Endpoint Protection"
-"clientcommunicationservice.exe", "Antivirus/EDR", "Trend Micro"
-"clientlogservice.exe", "Antivirus/EDR", "Trend Micro"
-"clientsolutionframework.exe", "Antivirus/EDR", "Trend Micro"
-"cmrcservice.exe", "Microsoft Configuration Manager Remote Control Service", "Remote Control"
-"concentr.exe", "Palo Alto Networks GlobalProtect", "VPN"
-"coreserviceshell.exe", "AV", "Trend Micro"
-"cpd.exe", "Check Point Daemon", "Security"
-"cpx.exe", "SentinelOne Singularity XDR", "XDR"
-"csfalconcontainer.exe", "CrowdStrike Falcon", "EDR"
-"csfalcondaterepair.exe", "CrowdStrike Falcon", "EDR"
-"csfalconservice.exe", "CrowdStrike Falcon Insight XDR", "XDR"
-"cybereason.exe", "Cybereason EDR", "EDR"
-"cytomicendpoint.exe", "Cytomic Orion", "Security"
-"cyveraconsole.exe", "EDR", "Palo Alto Networks (Cyvera)"
-"cyveraservice.exe", "EDR", "Palo Alto Networks (Cortex XDR)"
-"cyvragentsvc.exe", "EDR", "Palo Alto Networks (Cortex XDR)"
-"cyvrfsflt.exe", "EDR", "Palo Alto Networks (Cortex XDR)"
-"darktracetsa.exe", "Darktrace", "EDR"
-"dataprotectionservice.exe", "Data Protection", "Trend Micro"
-"dlpagent.exe", "DLP", "Symantec DLP Agent"
-"dlpsensor.exe", "DLP", "McAfee DLP Sensor"
-"dsmonitor.exe", "DriveSentry", "Security"
-"dwengine.exe", "DriveSentry", "Security"
-"edpa.exe", "AV", "McAfee Endpoint Security"
-"eegoservice.exe", "Encryption", "McAfee Endpoint Encryption"
-"egui.exe", "AV", "ESET NOD32 AV"
-"ekrn.exe", "AV", "ESET NOD32 AV"
-"elastic-agent.exe", "Elastic Agent (Fleet)", "EDR"
-"elastic-endpoint.exe", "Elastic Defend / Elastic Endpoint", "EDR"
-"endpoint-security.exe", "Elastic Endpoint Security Component", "EDR"
-"endpointbasecamp.exe", "EDR", "Trend Micro"
-"firesvc.exe", "FireEye Endpoint Agent", "Security"
-"firetray.exe", "FireEye Endpoint Agent", "Security"
-"fortiedr.exe", "EDR", "FortiEDR"
-"fortitray.exe", "Fortinet FortiTray", "VPN"
-"fortivpn.exe", "Fortinet FortiClient VPN", "VPN"
-"fw.exe", "Check Point Firewall", "Firewall"
-"healthservice.exe", "Microsoft OMS", "Monitoring"
-"hips.exe", "HIPS", "Host Intrusion Prevention System"
-"ir_agent.exe", "Rapid7 Insight Agent", "EDR"
-"klwtblfs.exe", "AV", "Kaspersky"
-"klwtpwrs.srv", "AV", "Kaspersky"
-"kpf4ss.exe", "Firewall", "Kerio Personal Firewall"
-"ksde.exe", "Kaspersky Secure Connection", "VPN"
-"ksdeui.exe", "Kaspersky Secure Connection", "VPN"
-"macmnsvc.exe", "AV", "McAfee Endpoint Security"
-"masvc.exe", "AV", "McAfee Endpoint Security"
-"mbae64.sys", "AV", "Malwarebytes"
-"mbamagent.exe", "Malwarebytes Agent", "Antivirus"
-"mbamservice.exe", "AV", "Malwarebytes"
-"mbamswissarmy.sys", "AV", "Malwarebytes"
-"mbamtray.exe", "AV", "Malwarebytes"
-"mcshield.exe", "AV", "McAfee VirusScan"
-"mdecryptservice.exe", "Encryption", "McAfee Endpoint Encryption"
-"mdnsresponder.exe", "Bonjour Service", "Network Service"
-"mfeann.exe", "AV", "McAfee"
-"mfeepehost.exe", "Encryption", "McAfee Endpoint Encryption"
-"mfefire.exe", "HIPS", "McAfee Host Intrusion Prevention"
-"mfemactl.exe", "Firewall", "McAfee Endpoint Security Firewall"
-"mfemms.exe", "AV", "McAfee"
-"monitoringhost.exe", "Microsoft Monitoring Agent", "Monitoring"
-"mpdefendercoreservice.exe", "Microsoft Defender Core Service", "AV"
-"msascuil.exe", "AV", "Windows Defender"
-"msmpeng.exe", "AV", "Windows Defender"
-"msseces.exe", "AV", "Microsoft Security Essentials"
-"mssense.exe", "Microsoft Defender ATP (Advanced Threat Protection)", "Security"
-"mssense.exe", "Microsoft Defender ATP", "Security"
-"nissrv.exe", "AV Network Inspection", "Microsoft Security Essentials"
-"nortonsecurity.exe", "AV", "Norton Antivirus"
-"npmdagent.exe", "Network Monitoring", "SolarWinds NPM"
-"ns.exe", "AV", "Norton Antivirus"
-"nsservice.exe", "AV", "Norton Antivirus"
-"openvpnserv.exe", "OpenVPN", "VPN"
-"outpost.exe", "Agnitum Outpost Firewall", "Firewall"
-"panda_url_filtering.exe", "AV", "Panda Security"
-"pangps.exe", "Palo Alto Networks GlobalProtect", "VPN"
-"pavfnsvr.exe", "AV", "Panda Security"
-"pavsrv.exe", "AV", "Panda Security"
-"personalfirewallservice.exe", "Firewall", "Trend Micro"
-"psanhost.exe", "AV", "Panda Security"
-"qualysagent.exe", "Qualys Cloud Agent", "Vulnerability"
-"qualysagentui.exe", "Qualys Cloud Agent UI", "Vulnerability"
-"realtimescanservice.exe", "Antivirus/EDR", "Trend Micro"
-"rtvscan.exe", "AV", "Symantec Endpoint Protection"
-"samplingservice.exe", "Antivirus/EDR", "Trend Micro"
-"savservice.exe", "AV", "Sophos Endpoint Security"
-"sbiesvc.exe", "Sandboxie", "Security"
-"securityagentmonitor.exe", "Antivirus/EDR", "Trend Micro"
-"securityhealthservice.exe", "Windows Security Health Service", "Security"
-"securityhealthsystray.exe", "Windows Security Systray", "Security"
-"senseir.exe", "Windows Defender IR", "Security"
-"sensendr.exe", "Windows Defender NDR", "Security"
-"sensetvm.exe", "Windows Defender TVM", "Security"
-"sentinel.exe", "EDR", "Unknown (Potential: Microsoft Defender)"
-"sentinelagent.exe", "EDR", "SentinelOne"
-"sentinelagent.exe", "SentinelOne", "EDR"
-"sentinelctl.exe", "EDR", "SentinelOne"
-"sentinelmemoryscanner.exe", "SentinelOne", "EDR"
-"sentinelservicehost.exe", "SentinelOne", "EDR"
-"sentinelstaticengine.exe", "SentinelOne", "EDR"
-"sentinelstaticenginescanner.exe", "SentinelOne", "EDR"
-"sgrmbroker.exe", "Windows System Integrity Management Broker", "System Integrity"
-"shstat.exe", "AV", "McAfee VirusScan"
-"smsvchost.exe", "Application", "Microsoft .NET Framework"
-"sophosav.exe", "AV", "Sophos Endpoint Security"
-"sophosclean.exe", "AV", "Sophos"
-"sophoshealth.exe", "AV", "Sophos"
-"sophossps.exe", "AV", "Sophos Endpoint Security"
-"sophosui.exe", "AV", "Sophos Endpoint Security"
-"sysmon.exe", "Microsoft Sysmon", "Security"
-"sysmon64.exe", "Microsoft Sysmon", "Security"
-"tanclient.exe", "EDR", "Tanium EDR"
-"taniumclient.exe", "Tanium Client", "EDR"
-"telemetryagentservice.exe", "Telemetry", "Trend Micro"
-"telemetryservice.exe", "Telemetry", "Unknown"
-"tmlisten.exe", "Trend Micro Apex One Core", "AV"
-"tmntsrv.exe", "AV", "Trend Micro OfficeScan"
-"tmproxy.exe", "Trend Micro Proxy Filter", "Network Filter"
-"traps.exe", "EDR", "Palo Alto Networks (Cortex XDR)"
-"trapsagent.exe", "Palo Alto Networks Cortex XDR", "XDR"
-"trapsd.exe", "Palo Alto Networks Cortex XDR", "XDR"
-"truecrypt.exe", "Encryption", "TrueCrypt"
-"uiwinmgr.exe", "AV", "Trend Micro"
-"updatesrv.exe", "AV", "Bitdefender"
-"vgauthservice.exe", "VMware", "Virtualization"
-"vm3dservice.exe", "VMware", "Virtualization"
-"vmtoolsd.exe", "VMware", "Virtualization"
-"vpnagent.exe", "Cisco AnyConnect Secure Mobility Client", "VPN"
-"vpnagent.exe", "Cisco AnyConnect", "VPN"
-"vpnui.exe", "Cisco AnyConnect", "VPN"
-"vsserv.exe", "AV", "Bitdefender Total Security"
-"vulnerabilityprotectionagent.exe", "Trend Micro", "Vulnerability Protection"
-"windefend.exe", "AV", "Windows Defender"
-"winlogbeat.exe", "Elastic Winlogbeat", "Security"
-"wireguard.exe", "VPN", "WireGuard"
-"wrsa.exe", "AV", "Webroot Anywhere"
-"wscservice.exe", "Security Service", "Trend Micro"
-"xagt.exe", "FireEye HX", "Security"
-"zsatray.exe", "Zscaler Client Connector", "Proxy / ZTNA"
-"zsatraymanager.exe", "Zscaler Client Connector Manager", "Proxy / ZTNA"
+Process,ProductName,Tag,Type
+appcontrolagent.exe,Trend Micro Application Control Agent,APPC,Application Control
+dax3api.exe,Dolby DAX API Service,AUDIO,Audio Processing
+fmservice64.exe,Fortemedia APO Service,AUDIO,Audio Processing
+rtkauduservice64.exe,Realtek Audio Universal Service,AUDIO,Audio Driver
+aswidsagent.exe,Avast IDS Agent,AV,AV / IDS
+avastsvc.exe,Avast AV Service,AV,AV
+avastui.exe,Avast UI,AV,AV UI
+avgnt.exe,Avira AV Guard UI,AV,AV UI
+avguard.exe,Avira AV Guard,AV,AV
+avpui.exe,Kaspersky UI,AV,AV UI
+bdagent.exe,Bitdefender Total Security Agent,AV,AV
+bdntwrk.exe,Bitdefender Network Protection,AV,AV / Network
+ccsvchst.exe,Symantec Endpoint Protection / Norton Security,AV,AV / EDR
+clientcommunicationservice.exe,Trend Micro Client Communication Service,AV,AV / EDR
+clientlogservice.exe,Trend Micro Client Log Service,AV,AV / EDR
+clientsolutionframework.exe,Trend Micro Client Solution Framework,AV,AV / EDR
+coreserviceshell.exe,Trend Micro Core Service Shell,AV,AV / EDR
+egui.exe,ESET NOD32 / ESET Endpoint Security GUI,AV,AV UI
+klwtblfs.exe,Kaspersky File System Filter,AV,AV
+macmnsvc.exe,McAfee Agent Common Service,AV,AV / EDR
+masvc.exe,McAfee Agent Service,AV,AV / EDR
+mcshield.exe,McAfee VirusScan / On-Access Scanner,AV,AV
+mfemms.exe,McAfee Endpoint Security / Management Service,AV,AV / EDR
+mpdefendercoreservice.exe,Microsoft Defender Core Service,AV,AV
+msascuil.exe,Windows Defender UI,AV,AV UI
+msmpeng.exe,Microsoft Defender Antivirus Engine,AV,AV
+nortonsecurity.exe,Norton Security,AV,AV
+ns.exe,Norton Security,AV,AV
+nsservice.exe,Norton Security Service,AV,AV
+ntrtscan.exe,Trend Micro Real-Time Scan Engine,AV,AV / EDR
+pavfnsvr.exe,Panda AV File Name Server,AV,AV
+pavsrv.exe,Panda AV Service,AV,AV
+realtimescanservice.exe,Trend Micro RealTime Scan Service,AV,AV / EDR
+rtvscan.exe,Symantec Endpoint Protection,AV,AV
+samplingservice.exe,Trend Micro Sampling Service,AV,AV / EDR
+savservice.exe,Sophos Endpoint Security / SAVService,AV,AV / EDR
+shstat.exe,McAfee VirusScan Status Monitor,AV,AV UI
+sophosav.exe,Sophos Endpoint AV,AV,AV
+sophosclean.exe,Sophos Clean,AV,AV / Remediation
+sophosui.exe,Sophos UI,AV,AV UI
+tmlisten.exe,Trend Micro AV / Apex One Core,AV,AV / EDR
+tmntsrv.exe,Trend Micro OfficeScan / Apex One Service,AV,AV / EDR
+tmproxy.exe,Trend Micro Network Traffic Scanner / Proxy filter,AV,AV / Network Filter
+updatesrv.exe,Bitdefender Update Service,AV,AV
+vsserv.exe,Bitdefender Virus Shield Service,AV,AV
+windefend.exe,Microsoft Defender AV Service,AV,AV
+wscservice.exe,Trend Micro Security Service,AV,AV / EDR
+applephotostreams.exe,Apple Photo Streams,CLOUD,Cloud Sync / iCloud
+apsdaemon.exe,Apple iCloud Push Daemon,CLOUD,Cloud Sync / iCloud
+box.exe,Box Desktop,CLOUD,Cloud Sync / Box
+boxdrive.exe,Box Drive,CLOUD,Cloud Sync / Box
+dropbox.exe,Dropbox Desktop,CLOUD,Cloud Sync / Dropbox
+googledrivefs.exe,Google Drive for Desktop,CLOUD,Cloud Sync / Google Drive
+icloudckks.exe,Apple iCloud CKKS,CLOUD,Cloud Sync / iCloud
+iclouddrive.exe,Apple iCloud Drive,CLOUD,Cloud Sync / iCloud
+icloudhome.exe,Apple iCloud Home,CLOUD,Cloud Sync / iCloud
+icloudoutlookconfig64.exe,Apple iCloud Outlook Config,CLOUD,Cloud Sync / iCloud
+icloudphotos.exe,Apple iCloud Photos,CLOUD,Cloud Sync / iCloud
+icloudservices.exe,Apple iCloud Services,CLOUD,Cloud Sync / iCloud
+nextcloud.exe,Nextcloud Desktop,CLOUD,Cloud Sync / Nextcloud
+onedrive.exe,Microsoft OneDrive,CLOUD,Cloud Sync / OneDrive
+secd.exe,Apple iCloud Security Daemon,CLOUD,Cloud Sync / iCloud
+1password.exe,1Password Desktop,CREDS,Credential Manager / Vault
+bitwarden.exe,Bitwarden Desktop,CREDS,Credential Manager / Vault
+keepass.exe,KeePass Password Safe 2,CREDS,Credential Manager
+keepassxc.exe,KeePassXC,CREDS,Credential Manager
+dlpagent.exe,Symantec DLP Agent,DLP,DLP
+dlpsensor.exe,McAfee DLP Sensor,DLP,DLP
+edpa.exe,McAfee Endpoint Security / DLP Agent,DLP,AV / DLP
+intelcphdcpsvc.exe,Intel Content Protection HDCP Service,DRM,DRM / Content Protection
+intelcphecisvc.exe,Intel Component Helper Service,DRM,DRM / Content Protection
+avp.exe,Kaspersky AV / KES,EDR,AV / EDR
+csfalconcontainer.exe,CrowdStrike Falcon Sensor Container,EDR,EDR / XDR
+csfalcondaterepair.exe,CrowdStrike Falcon Repair Component,EDR,EDR / XDR
+csfalconservice.exe,CrowdStrike Falcon Sensor,EDR,EDR / XDR
+cyserver.exe,Palo Alto Networks Cortex XDR Agent (protected service),EDR,EDR / XDR
+cyveraconsole.exe,Palo Alto Networks Cortex XDR Console,EDR,EDR / XDR
+cyveraservice.exe,Palo Alto Networks Cortex XDR Service,EDR,EDR / XDR
+cyvragentsvc.exe,Palo Alto Networks Cortex XDR Agent Service,EDR,EDR / XDR
+cyvrfsflt.exe,Palo Alto Networks Cortex XDR FS Filter,EDR,EDR / XDR
+ekrn.exe,ESET NOD32 / ESET Endpoint Security Kernel Service,EDR,AV / EDR
+elastic-agent.exe,Elastic Agent (Fleet / telemetry / security),EDR,EDR / Telemetry / UEM
+elastic-endpoint.exe,Elastic Defend / Elastic Endpoint,EDR,EDR / Telemetry
+endpoint-security.exe,Elastic Endpoint Security Component,EDR,EDR / Telemetry
+endpointbasecamp.exe,Trend Micro Endpoint Basecamp,EDR,EDR
+firesvc.exe,FireEye Endpoint Agent Service,EDR,EDR / IR
+firetray.exe,FireEye Endpoint Agent Tray,EDR,EDR / IR
+ir_agent.exe,Rapid7 Insight Agent,EDR,EDR / Vulnerability / IR
+mssense.exe,Microsoft Defender for Endpoint (MDE / ATP),EDR,EDR
+psanhost.exe,Panda Advanced Protection Host,EDR,AV / EDR
+sentinelagent.exe,SentinelOne Agent,EDR,EDR / XDR
+sentinelctl.exe,SentinelOne Control CLI,EDR,EDR / XDR
+sentinelmemoryscanner.exe,SentinelOne Memory Scanner,EDR,EDR / XDR
+sentinelservicehost.exe,SentinelOne Service Host,EDR,EDR / XDR
+sentinelstaticengine.exe,SentinelOne Static Engine,EDR,EDR / XDR
+sentinelstaticenginescanner.exe,SentinelOne Static Engine Scanner,EDR,EDR / XDR
+sophossps.exe,SophosSps (Exploit Mitigation / Endpoint Defense),EDR,EDR / Exploit Guard
+tanclient.exe,Tanium EDR Client (legacy name),EDR,EDR / IR
+taniumclient.exe,Tanium Client (IR / EDR / Asset Visibility),EDR,EDR / Asset Mgmt / IR
+traps.exe,Palo Alto Networks Cortex XDR (Traps),EDR,EDR / XDR
+trapsagent.exe,Palo Alto Networks Cortex XDR (Traps Agent),EDR,EDR / XDR
+trapsd.exe,Palo Alto Networks Cortex XDR Daemon,EDR,EDR / XDR
+wrsa.exe,Webroot SecureAnywhere,EDR,AV / EDR
+xagt.exe,FireEye Endpoint Agent / Trellix HX Agent,EDR,EDR / IR
+axcrypt.exe,AxCrypt,ENC,Encryption
+eegoservice.exe,McAfee Endpoint Encryption Service,ENC,Disk Encryption
+mdecryptservice.exe,McAfee Endpoint Encryption Decrypt Service,ENC,Disk Encryption
+mfeepehost.exe,McAfee Endpoint Encryption Host,ENC,Disk Encryption
+truecrypt.exe,TrueCrypt,ENC,Encryption
+fw.exe,Check Point Firewall,FW,Firewall
+mfemactl.exe,McAfee Endpoint Security Firewall Controller,FW,Firewall
+personalfirewallservice.exe,Trend Micro Personal Firewall,FW,Firewall
+igfxcuiservice.exe,Intel Graphics CUI Service,GPU,GPU Runtime
+igfxem.exe,Intel Graphics EM,GPU,GPU Runtime
+hips.exe,Host Intrusion Prevention System,HIPS,HIPS
+mfefire.exe,McAfee Host Intrusion Prevention / Firewall,HIPS,HIPS / Firewall
+sgrmbroker.exe,Windows System Guard Runtime Monitor Broker,INT,System Integrity
+healthservice.exe,Microsoft OMS / SCOM HealthService,MON,Monitoring
+monitoringhost.exe,Microsoft Monitoring Agent,MON,Monitoring
+npmdagent.exe,SolarWinds NPM Agent,MON,Network Monitoring
+synrpcserver.exe,Synology Assistant RPC Service,NAS,NAS Discovery
+sensendr.exe,Microsoft Defender NDR component,NDR,Security / NDR
+esif_uf.exe,Intel Dynamic Platform & Thermal Framework,OEM,OEM Thermal Mgmt
+ibmpmsvc.exe,Lenovo Power Management Service,OEM,OEM Power
+jhi_service.exe,Intel Dynamic Application Loader (HECI),OEM,OEM Management
+powermgr.exe,Lenovo Power Manager,OEM,OEM Power
+shtctky.exe,Lenovo Hotkeys,OEM,OEM Hotkeys
+tphkload.exe,Lenovo Hotkey Loader,OEM,OEM Hotkeys
+tposd.exe,Lenovo On-Screen Display,OEM,OEM OSD
+cpd.exe,Check Point Daemon,OTHER,Security
+mdnsresponder.exe,Bonjour Service,OTHER,Network Service / mDNS
+panda_url_filtering.exe,Panda URL Filtering,OTHER,Web Filter
+sbiesvc.exe,Sandboxie Service,OTHER,Sandbox / Isolation
+securityhealthservice.exe,Windows Security Health Service,OTHER,Security / Health
+securityhealthsystray.exe,Windows Security Systray,OTHER,Security / Health
+senseir.exe,Microsoft Defender IR component,OTHER,Security / IR
+smsvchost.exe,Microsoft .NET Framework service host,OTHER,Application
+msra.exe,Windows Remote Assistance,RDP,Remote Assistance
+msrdc.exe,Microsoft Remote Desktop Client (Modern),RDP,RDP
+mstsc.exe,Microsoft Remote Desktop Client,RDP,RDP
+cmrcservice.exe,Microsoft Configuration Manager Remote Control Service,RMM,Remote Control
+quickassist.exe,Microsoft Quick Assist,RMM,Remote Assistance
+teamviewer_service.exe,TeamViewer Service,RMM,Remote Control / RMM
+tbtp2pshortcutservice.exe,Intel Thunderbolt P2P Shortcut Service,TB,Thunderbolt
+thunderboltservice.exe,Intel Thunderbolt Service,TB,Thunderbolt
+sophoshealth.exe,Sophos Health,TEL,AV / Telemetry
+sysmon.exe,Microsoft Sysmon,TEL,Security Telemetry
+sysmon64.exe,Microsoft Sysmon (64-bit),TEL,Security Telemetry
+telemetryagentservice.exe,Trend Micro Telemetry Agent Service,TEL,Telemetry
+telemetryservice.exe,Trend Micro Telemetry Service,TEL,Telemetry
+winlogbeat.exe,Elastic Winlogbeat (log forwarder),TEL,Security Telemetry
+aesm_service.exe,Intel SGX AESM Service,TRUST,Trusted Execution (SGX)
+ipoverusbsvc.exe,Microsoft IP over USB,USB,USB networking
+ss_conn_service.exe,Samsung USB Driver Service,USB,USB / Android
+ss_conn_service2.exe,Samsung USB Driver Service (alt),USB,USB / Android
+vgauthservice.exe,VMware VGAuthService,VIRT,Virtualization / Guest Tools
+vm3dservice.exe,VMware 3D Service,VIRT,Virtualization / Guest Tools
+vmnat.exe,VMware NAT Service,VIRT,Virtualization / Networking
+vmnetdhcp.exe,VMware DHCP Service,VIRT,Virtualization / Networking
+vmtoolsd.exe,VMware Tools Daemon,VIRT,Virtualization / Guest Tools
+vmware-authd.exe,VMware Authorization Service,VIRT,Virtualization / Guest Tools
+vmware-tray.exe,VMware Tray,VIRT,Virtualization / Guest Tools
+vmware-usbarbitrator64.exe,VMware USB Arbitration Service,VIRT,Virtualization / Guest Tools
+wsl.exe,Windows Subsystem for Linux,VIRT,Virtualization / Subsystem
+wslhost.exe,Windows Subsystem for Linux Host,VIRT,Virtualization / Subsystem
+wslservice.exe,Windows Subsystem for Linux Service,VIRT,Virtualization / Subsystem
+concentr.exe,Palo Alto Networks GlobalProtect,VPN,VPN
+fortitray.exe,Fortinet FortiClient / FortiTray,VPN,VPN / Endpoint Security
+fortivpn.exe,Fortinet FortiClient VPN,VPN,VPN
+ksde.exe,Kaspersky Secure Connection,VPN,VPN
+ksdeui.exe,Kaspersky Secure Connection,VPN,VPN
+openvpnserv.exe,OpenVPN,VPN,VPN
+openvpnserv2.exe,OpenVPN (Service v2),VPN,VPN
+pangps.exe,Palo Alto Networks GlobalProtect,VPN,VPN
+vpnagent.exe,Cisco AnyConnect Secure Mobility Client,VPN,VPN
+vpnui.exe,Cisco AnyConnect,VPN,VPN
+wireguard.exe,WireGuard,VPN,VPN
+qualysagent.exe,Qualys Cloud Agent,VULN,Vuln Mgmt / Compliance
+qualysagentui.exe,Qualys Cloud Agent UI,VULN,Vuln Mgmt / Compliance
+sensetvm.exe,Microsoft Defender TVM (Threat & Vulnerability Mgmt),VULN,Vulnerability Mgmt
+vulnerabilityprotectionagent.exe,Trend Micro Vulnerability Protection Agent,VULN,Vuln Mgmt
+aoservice.exe,Citrix Secure Access Client Service,ZTNA,ZTNA / VPN
+appprotection.exe,Citrix App Protection,ZTNA,ZTNA / Anti-hooking
+ctxsdps.exe,Citrix Endpoint Analysis / Secure Access,ZTNA,ZTNA / VPN
+nsload.exe,Citrix Secure Access Client Loader,ZTNA,ZTNA / VPN
+nsverctl.exe,Citrix Secure Access Verification Control,ZTNA,ZTNA / VPN
+updaterservice.exe,Citrix Workspace Updater (CWAUpdaterService),ZTNA,ZTNA / Workspace
+zsatray.exe,Zscaler Client Connector,ZTNA,Proxy / CASB / ZTNA
+zsatraymanager.exe,Zscaler Client Connector (privileged),ZTNA,Proxy / CASB / ZTNA
