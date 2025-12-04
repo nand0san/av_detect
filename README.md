@@ -1,36 +1,44 @@
-
-# Security Software Detector (`av_detect`)
+# `av_detect` — Security Software Detector
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.1.0`
-- **Scope:** Image-name–based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
-- **Use cases:** DFIR triage, Red Team reconnaissance, IT asset survey.
+* **Version:** `v2.1.0`
+* **Scope:** Image-name–based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
+* **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
----
 
-## What’s new in `v2.1.0`
 
-- **Deterministic, parser-friendly output**
-  - Leading **unknown** block (excludes Windows baseline and mainstream apps).
-  - Separator line `---` for parsers.
-  - Detections **sorted alphabetically** and prefixed with `[TAG]`.
-- **Compact `cmd=`** (no outer quotes, normalized spaces, smart truncation).
-- **Non-intrusive fallbacks**
-  - `svc=`/`bin=` from SCM when `cmd=` is not available.
-  - `img=` (full image path) when neither `cmd=` nor SCM data is available.
-- **Expanded 2024–2025 catalog:** Falcon, SentinelOne, Cortex XDR, Elastic, Trend, McAfee/Trellix, Sophos, ESET, Zscaler, Fortinet, Tanium, Rapid7, Qualys, etc.
-- **New tags:** `[CLOUD]`, `[CREDS]`, `[RDP]`, `[ZTNA]` in addition to `[AV]`, `[EDR]`, `[VPN]`, `[TEL]`, `[VIRT]`, `[FW]`, `[HIPS]`, `[VULN]`, `[NDR]`, `[AUDIO]`, `[OEM]`, `[DRM]`, `[USB]`, `[TB]`, `[NAS]`, `[INT]`, `[OTHER]`.
+## What's new in `v2.1.0`
 
----
+* **Deterministic, parser-friendly output**
+
+  * Leading **unknown** block (non-baseline, non-mainstream processes).
+  * Stable separator line `---`.
+  * Security software detections sorted alphabetically and prefixed with `[TAG]`.
+
+* **Compact process metadata**
+
+  * `cmd=` normalized command line (no outer quotes, spacing normalized, smart truncation).
+  * `svc=` and `bin=` fallback metadata from SCM.
+  * `img=` for full image path when others are unavailable.
+
+* **Expanded 2024–2025 detection catalog**
+
+  * CrowdStrike, SentinelOne, Cortex XDR, Elastic Agent, Trend, McAfee/Trellix, Sophos, ESET, Zscaler, Fortinet, Tanium, Rapid7, Qualys, etc.
+
+* **New categories**
+
+  * `[CLOUD]`, `[CREDS]`, `[RDP]`, `[ZTNA]`, plus existing `[AV]`, `[EDR]`, `[VPN]`, `[TEL]`, `[VIRT]`, `[FW]`, `[HIPS]`, `[VULN]`, `[NDR]`, `[AUDIO]`, `[OEM]`, `[DRM]`, `[USB]`, `[TB]`, `[NAS]`, `[INT]`, `[OTHER]`.
+
+
 
 ## Requirements
 
-- **OS:** Windows 10/11 (x64 recommended).
-- **Compiler:** C++17+ (MSVC, MinGW-w64 g++, clang-cl).
-- **Headers:** Win32 SDK (`tlhelp32.h`, `winsvc.h`) provided by MSVC/MinGW-w64.
+* **OS:** Windows 10/11 (x64 recommended)
+* **Compiler:** MSVC, MinGW-w64 g++, clang-cl (C++17+)
+* **Headers:** Provided by standard Win32 SDK (`tlhelp32.h`, `winsvc.h`)
 
----
+
 
 ## Build
 
@@ -38,9 +46,9 @@ Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemet
 
 ```bat
 cl /std:c++17 /O2 /W3 /EHsc av_detect.cpp /link /SUBSYSTEM:CONSOLE
-````
+```
 
-### MinGW-w64 g++
+### MinGW-w64 (g++)
 
 ```bash
 g++ -std=c++17 -O2 -Wall -o av_detect.exe av_detect.cpp
@@ -60,9 +68,7 @@ cmake -S . -B build
 cmake --build build --config Release
 ```
 
-> Note: 64-bit builds simplify future extensions (paths/PEB on WOW64).
 
----
 
 ## Usage
 
@@ -70,7 +76,7 @@ cmake --build build --config Release
 .\av_detect.exe
 ```
 
-**Sample output:**
+**Example output:**
 
 ```
 AV_detect Version: v2.1.0
@@ -78,184 +84,166 @@ AV_detect Version: v2.1.0
 [unknown] Non-system unknown processes (24):
 - ai.exe | cmd=C:\Program Files\Microsoft Office\root\...
 - ...
----
+
 [AV] Kaspersky UI - exe=avpui.exe
 [CLOUD] Nextcloud Desktop - exe=nextcloud.exe
 [EDR] Kaspersky AV / KES - exe=avp.exe
 [RDP] Microsoft Remote Desktop Client - exe=mstsc.exe
 [VPN] WireGuard - exe=wireguard.exe
 ...
-
-Found security software process (AV, anti-malware, EDR, XDR, etc.) running.
 ```
 
-* **Exit code:** always `0`; findings are reported via `stdout`.
+Exit code is always **0**. Output is exclusively on **stdout**.
 
----
+
 
 ## Output format (stable)
 
-* **Unknown lines:**
-  `- <exeLower>[ | cmd=<normalized> | svc=<name>(+N)[ | bin=<path>] | img=<fullpath>]`
-* **Separator:** `---`
+* **Unknown processes:**
+
+  ```
+  - <exeLower>[ | cmd=<normalized> | svc=<name>(+N)[ | bin=<path>] | img=<fullpath>]
+  ```
+
+* **Separator:**
+  `---`
+
 * **Detections:**
-  `\[<TAG>\] <Product Name> - exe=<ImageName>`
-* **Truncation:** lines are right-truncated with `...` to honor `kLineMax`.
+
+  ```
+  [<TAG>] <ProductName> - exe=<ImageName>
+  ```
 
 ### Tags
 
-`[AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [TEL], [VIRT], [FW], [HIPS], [VULN], [NDR], [AUDIO], [OEM], [DRM], [USB], [TB], [NAS], [INT], [OTHER]`
+```
+[AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [TEL], [VIRT],
+[FW], [HIPS], [VULN], [NDR], [AUDIO], [OEM], [DRM], [USB], [TB],
+[NAS], [INT], [OTHER]
+```
 
----
+
 
 ## How it works
 
-* Enumerates processes via `CreateToolhelp32Snapshot`.
-* Case-insensitive exact match on image name (`.exe`) against the internal catalog.
-* **De-dup by image:** a single process can map to **multiple** products (all are listed).
-* **Unknown** = not in the catalog and not part of **Windows baseline** or **mainstream apps**.
+* Enumerates processes using `CreateToolhelp32Snapshot`.
+* Performs case-insensitive exact match on `.exe` names.
+* A single process may match **multiple products** → all listed.
+* **Unknown** includes everything not in the catalog and not part of the Windows or common-apps baseline.
 
 ### Baselines
 
-* `baselineSystem()`: only **native Windows** binaries (core, svchost, shell, UWP brokers, WMI, printing, WSL infra, etc.).
-* `baselineCommonApps()`: **mainstream** non-suspicious apps (popular browsers, Microsoft Office, IM, Terminal/winget).
+* `baselineSystem()` → core Windows OS binaries
+* `baselineCommonApps()` → mainstream, non-suspicious software (Office, browsers, chat clients, terminal apps, etc.)
 
----
+
 
 ## Limitations
 
-* Name-based heuristics: renamed/protected processes may evade detection.
-* Does **not** inspect kernel drivers/services nor licensing/product state.
-* **Low-noise** profile: no `SeDebugPrivilege`, no process memory access.
+* Name-based detection: renamed/protected processes may evade classification.
+* Does **not** inspect kernel drivers or licensing state.
+* Low-noise by design: no handle access, no memory inspection, no `SeDebugPrivilege`.
 
----
 
-## CSV & PowerShell
 
-### CSV schema
+## CSV + PowerShell
 
-Publish `processes.csv` with columns:
+### CSV schema (`processes.csv`)
 
 | Process (exe)   | ProductName               | Tag     | Type                     |
 | --------------- | ------------------------- | ------- | ------------------------ |
 | `avp.exe`       | `Kaspersky AV / KES`      | `EDR`   | `AV / EDR`               |
 | `nextcloud.exe` | `Nextcloud Desktop`       | `CLOUD` | `Cloud Sync / Nextcloud` |
 | `keepass.exe`   | `KeePass Password Safe 2` | `CREDS` | `Credential Manager`     |
-| …               | …                         | …       | …                        |
 
-> `Tag` = short label without brackets; `Type` = longer descriptive category.
 
-### PowerShell (online; corp-friendly)
 
-**Option A — `Invoke-WebRequest` with system proxy & TLS:**
+## PowerShell detection (online)
 
-```powershell
-$Url = 'https://raw.githubusercontent.com/<org>/<repo>/main/processes.csv'
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$Csv = (Invoke-WebRequest -Uri $Url -UseBasicParsing -ProxyUseDefaultCredentials -TimeoutSec 10).Content | ConvertFrom-Csv
-$Procs = Get-Process
-$Csv | ForEach-Object {
-  $name = ($_.'Process' -replace '\.exe$','')
-  $r = $Procs | Where-Object { $_.ProcessName -ieq $name }
-  if($r){ [pscustomobject]@{ Process="$($r[0].ProcessName).exe"; ProductName=$_.ProductName; Tag=$_.Tag; Type=$_.Type } }
-} | Sort-Object Tag,Process,ProductName -Unique | Format-Table
+These one-liners use the canonical CSV:
+
+```
+https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv
 ```
 
-**Option B — .NET `WebClient` honoring system proxy (often bypasses strict policies):**
+### **Option A — Invoke-WebRequest (simple, TLS 1.2)**
 
 ```powershell
-$Url = 'https://raw.githubusercontent.com/<org>/<repo>/main/processes.csv'
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$wc = New-Object Net.WebClient
-$wc.Proxy = [Net.WebRequest]::GetSystemWebProxy()
-$wc.Proxy.Credentials = [Net.CredentialCache]::DefaultCredentials
-$Csv = $wc.DownloadString($Url) | ConvertFrom-Csv
-$Procs = Get-Process
-$Csv | ForEach-Object {
-  $name = ($_.'Process' -replace '\.exe$','')
-  $r = $Procs | Where-Object { $_.ProcessName -ieq $name }
-  if($r){ [pscustomobject]@{ Process="$($r[0].ProcessName).exe"; ProductName=$_.ProductName; Tag=$_.Tag; Type=$_.Type } }
-} | Sort-Object Tag,Process,ProductName -Unique | Format-Table
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$url='https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv';$procs=Get-Process;(Invoke-WebRequest -Uri $url -UseBasicParsing).Content|ConvertFrom-Csv|ForEach-Object{$name=($_.Process -replace '\.exe$','');$r=$procs|Where-Object{$_.ProcessName -ieq $name};if($r){[pscustomobject]@{Process="$($r[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table
 ```
 
-**Option C — BITS (when `Invoke-*` is blocked, but BITS allowed):**
+### **Option B — .NET WebClient (honors system proxy)**
 
 ```powershell
-$Url  = 'https://raw.githubusercontent.com/<org>/<repo>/main/processes.csv'
-$Dest = Join-Path $env:TEMP 'processes.csv'
-Start-BitsTransfer -Source $Url -Destination $Dest
-$Csv  = Import-Csv $Dest
-Remove-Item $Dest -Force
-$Procs = Get-Process
-$Csv | ForEach-Object {
-  $name = ($_.'Process' -replace '\.exe$','')
-  $r = $Procs | Where-Object { $_.ProcessName -ieq $name }
-  if($r){ [pscustomobject]@{ Process="$($r[0].ProcessName).exe"; ProductName=$_.ProductName; Tag=$_.Tag; Type=$_.Type } }
-} | Sort-Object Tag,Process,ProductName -Unique | Format-Table
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$url='https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv';$wc=New-Object Net.WebClient;$wc.Proxy=[Net.WebRequest]::GetSystemWebProxy();$wc.Proxy.Credentials=[Net.CredentialCache]::DefaultCredentials;$procs=Get-Process;($wc.DownloadString($url)|ConvertFrom-Csv)|ForEach-Object{$name=($_.Process -replace '\.exe$','');$r=$procs|Where-Object{$_.ProcessName -ieq $name};if($r){[pscustomobject]@{Process="$($r[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table
 ```
 
-> Practical notes:
->
-> * No elevation required. Works behind NTLM/Kerberos proxies via `-ProxyUseDefaultCredentials` (A) or system proxy (B).
-> * Forcing `Tls12` reduces failures with TLS-inspection middleboxes.
-> * Avoid disabling cert validation or execution policy changes; not needed here.
-
-### PowerShell (offline)
+### **Option C — BITS (when Invoke-WebRequest is blocked)**
 
 ```powershell
-$Csv   = Import-Csv .\processes.csv
-$Procs = Get-Process
-$Csv | ForEach-Object {
-  $name = ($_.'Process' -replace '\.exe$','')
-  $r = $Procs | Where-Object { $_.ProcessName -ieq $name }
-  if($r){ [pscustomobject]@{ Process="$($r[0].ProcessName).exe"; ProductName=$_.ProductName; Tag=$_.Tag; Type=$_.Type } }
-} | Sort-Object Tag,Process,ProductName -Unique | Format-Table
+$url='https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv';$dest=Join-Path $env:TEMP 'processes.csv';Start-BitsTransfer -Source $url -Destination $dest;$procs=Get-Process;Import-Csv $dest|ForEach-Object{$name=($_.Process -replace '\.exe$','');$r=$procs|Where-Object{$_.ProcessName -ieq $name};if($r){[pscustomobject]@{Process="$($r[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table;Remove-Item $dest -Force
 ```
 
-> **Single-line (Option B) for restricted consoles:**
+### **Compact single-line (restricted shells)**
 
 ```powershell
-[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$u='https://raw.githubusercontent.com/<org>/<repo>/main/processes.csv';$w=New-Object Net.WebClient;$w.Proxy=[Net.WebRequest]::GetSystemWebProxy();$w.Proxy.Credentials=[Net.CredentialCache]::DefaultCredentials;($w.DownloadString($u)|ConvertFrom-Csv)|%{$n=($_.Process -replace '\.exe$','');$p=Get-Process|?{$_.ProcessName -ieq $n};if($p){[pscustomobject]@{Process="$($p[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$u='https://raw.githubusercontent.com/nand0san/av_detect/main/processes.csv';$w=New-Object Net.WebClient;$w.Proxy=[Net.WebRequest]::GetSystemWebProxy();$w.Proxy.Credentials=[Net.CredentialCache]::DefaultCredentials;($w.DownloadString($u)|ConvertFrom-Csv)|ForEach-Object{$n=($_.Process -replace '\.exe$','');$p=Get-Process|Where-Object{$_.ProcessName -ieq $n};if($p){[pscustomobject]@{Process="$($p[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table
 ```
 
----
 
-## Selected vendors in catalog
 
-* Microsoft Defender (AV/MDE), Sysmon, Security Health
-* CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Defend/Agent
-* Trend Micro Apex/OfficeScan, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot, Symantec/Norton
+## PowerShell detection (offline)
+
+For offline environments, download `processes.csv` manually and run:
+
+```powershell
+$procs=Get-Process;Import-Csv .\processes.csv -Header Process,ProductName,Tag,Type|ForEach-Object{$name=($_.Process -replace '\.exe$','');$r=$procs|Where-Object{$_.ProcessName -ieq $name};if($r){[pscustomobject]@{Process="$($r[0].ProcessName).exe";ProductName=$_.ProductName;Tag=$_.Tag;Type=$_.Type}}}|Sort-Object Tag,Process,ProductName -Unique|Format-Table
+```
+
+The forced header ensures stable parsing even if the CSV was exported without a header row.
+
+
+
+## Vendor coverage (subset)
+
+* Microsoft Defender, MDE, Sysmon
+* CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent
+* Trend Micro, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot
 * Zscaler, Fortinet, GlobalProtect, AnyConnect, OpenVPN, WireGuard
 * Tanium, Rapid7 Insight Agent, Qualys Cloud Agent
-* VMware Tools/Services, WSL stack
-* Cloud sync (OneDrive, Google Drive, Dropbox, Nextcloud, iCloud family)
-* Credential managers (KeePass, KeePassXC, Bitwarden, 1Password)
-* Common OEM/DRM/GPU/USB/TB/NAS auxiliaries on corporate endpoints
+* VMware Tools, WSL stack
+* Credential managers (KeePass, Bitwarden, 1Password, etc.)
+* Cloud sync (OneDrive, Dropbox, Google Drive, Nextcloud, iCloud)
+* OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
----
+
 
 ## Changelog
 
-* **v2.1.0**
+### v2.1.0
 
-  * Deterministic output (unknown → `---` → `[TAG]`-sorted detections).
-  * Compact `cmd=` and stable `kLineMax` truncation.
-  * Non-privileged fallbacks `svc=`/`bin=`/`img=`.
-  * New tags plus expanded **2024–2025** catalog.
-* **v2.0.x**
+* Deterministic output (`unknown → --- → TAG-sorted detections`)
+* Compact `cmd=` with truncation
+* Fallback `svc=` / `bin=` / `img=`
+* Expanded 2024–2025 catalog
+* New detection tags
 
-  * Unified AV/EDR/VPN/Telemetry catalog, UTF-8 output, basic de-dup.
+### v2.0.x
 
----
+* Unified AV/EDR/VPN/Telemetry catalog
+* UTF-8 output, basic de-duplication
+
+
 
 ## Contributing
 
-* Open a PR with: **Process** name(s), **ProductName**, `Tag`, `Type`, and short rationale (vendor doc or telemetry).
-* Update both `av_detect.cpp` (internal catalog) and `processes.csv` with the same **schema**.
+* Open a PR including **Process**, **ProductName**, **Tag**, **Type**, and the rationale (vendor documentation or telemetry).
+* Update **both** `av_detect.cpp` and `processes.csv`.
 
----
+
 
 ## License
 
 MIT.
+
 
