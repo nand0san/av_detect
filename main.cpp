@@ -83,8 +83,9 @@ static std::string collapseWs(std::string s) {
         }
     }
     // trim
-    while (!out.empty() && out.front()==' ') out.erase(out.begin());
-    while (!out.empty() && out.back()==' ') out.pop_back();
+    out.erase(0, out.find_first_not_of(' '));
+    size_t last = out.find_last_not_of(' ');
+    if (last != std::string::npos) out.erase(last + 1);
     return out;
 }
 
@@ -647,19 +648,13 @@ bool isSecuritySoftwareRunning() {
     std::vector<std::pair<std::string, DWORD>> unknown;
     unknown.reserve(seenLower.size());
 
-    for (const auto& kv : firstPidByExe) {
-        const std::string& p = kv.first;
-        const DWORD pid = kv.second;
-        if (p == selfLower) continue;
-        if (pseudoKernelNames().count(p)) continue;
-        const bool isKnown  = (sw.find(p) != sw.end());
-        const bool isSys    = (baselineSystem().count(p) != 0);
-        const bool isCommon = (baselineCommonApps().count(p) != 0);
-        if (!isKnown && !isSys && !isCommon) {
-            if (!hasExeExtension(p)) continue;
-            unknown.emplace_back(p, pid);
-        }
+    for (const auto& [p, pid] : firstPidByExe) {
+        if (p == selfLower || pseudoKernelNames().count(p) || 
+            sw.count(p) || baselineSystem().count(p) || baselineCommonApps().count(p)) continue;
+        if (!hasExeExtension(p)) continue;
+        unknown.emplace_back(p, pid);
     }
+
     std::sort(unknown.begin(), unknown.end(),
               [](const auto& a, const auto& b){ return a.first < b.first; });
 
