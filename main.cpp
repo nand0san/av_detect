@@ -1,10 +1,23 @@
-// av_detect.cpp — v2.4.4
-// - Salida monolínea sin comillas envolventes en cmd=/bin=
-// - Normalización de espacios en cmd= y strip de comillas exteriores
-// - Fallback img= (QueryFullProcessImageNameA) si no hay cmd ni SCM
-// - Detecciones ordenadas alfabéticamente con [TAG] al inicio
-// - Catálogo extendido (CLOUD/CREDS/RDP/…)
-// - Sin SeDebugPrivilege (perfil low-noise)
+// av_detect.cpp — v2.2.0
+//
+// Security Software Detector (Windows)
+// -----------------------------------
+// Enumerates live processes on the endpoint and matches each image-name
+// (case-insensitive) against a curated catalog of known security-related agents.
+//
+// Output is stable / parser-friendly:
+//   1) "[unknown]" block: non-baseline processes (best-effort metadata)
+//   2) Separator line: "---"
+//   3) Detections: "[TAG] ProductName - exe=ImageName" sorted alphabetically
+//
+// Design goals:
+//   - Low-noise triage: no SeDebugPrivilege, no invasive inspection.
+//   - No admin required: Toolhelp snapshot + best-effort enrichment.
+//   - Deterministic output for piping into SIEM parsers.
+//
+// Limitations (by design):
+//   - Name-based detection: renamed/protected processes may evade classification.
+//   - Does not validate license/state, drivers, or kernel-mode components.
 
 #include <iostream>
 #include <string>
@@ -13,40 +26,57 @@
 #include <unordered_set>
 #include <map>
 #include <algorithm>
+#include <fstream>
+#include <limits>
 #include <Windows.h>
 #include <tlhelp32.h>
 #include <winsvc.h>
+#include <cstdint>
 
 #ifndef VERSION
-#define VERSION "v2.1.0"
+#define VERSION "v2.2.0"
 #endif
 
-constexpr size_t kLineMax = 96;
 
+// Soft limit for characters per output line (keeps stdout compact and parser-friendly).
+constexpr size_t kLineMax = 120;
+
+constexpr size_t kNoLimit = std::numeric_limits<size_t>::max();
+
+// Processes Catalog entry for a known security-related executable.
 struct SecuritySoftware {
-    std::string name;  // Descripción humana
-    std::string type;  // Descripción larga
-    std::string tag;   // Etiqueta compacta
+    std::string name;  // Human-friendly product name
+    std::string type;  // Longer descriptor (kept for future use / completeness)
+    std::string tag;   // Compact classification tag (EDR, AV, VPN, ...)
 };
 
+// Services SCM-derived metadata for a Windows service-hosted process.
+// Used to enrich unknown processes when command line is not accessible.
 struct ServiceInfo {
-    std::string name;
-    std::string display;
-    std::string binary;
-    int extra_count = 0;
+    std::string name;      // Service name (SCM key)
+    std::string display;   // Display name (not currently printed)
+    std::string binary;    // Binary path (QueryServiceConfigA)
+    int extra_count = 0;   // Additional services sharing this PID (svchost groups, etc.)
 };
 
-// -------------------- utilidades --------------------
+// -------------------- utilities --------------------
+
+// Lowercase ASCII conversion used for case-insensitive matching.
 static std::string toLower(const std::string& s) {
     std::string out = s;
     std::transform(out.begin(), out.end(), out.begin(),
                    [](unsigned char c){ return static_cast<char>(::tolower(c)); });
     return out;
 }
+
+// Checks whether a lowercased filename ends with ".exe".
 static bool hasExeExtension(const std::string& lowerName) {
     const size_t n = lowerName.size();
     return n >= 4 && lowerName.compare(n-4, 4, ".exe") == 0;
 }
+
+// Returns this tool's own image name (basename) in lowercase.
+// Used to exclude the detector itself from the [unknown] list.
 static std::string selfImageNameLower() {
     char buf[MAX_PATH];
     DWORD len = GetModuleFileNameA(NULL, buf, MAX_PATH);
@@ -56,6 +86,9 @@ static std::string selfImageNameLower() {
     std::string base = (pos == std::string::npos) ? path : path.substr(pos+1);
     return toLower(base);
 }
+
+// Converts a UTF-16 buffer segment to UTF-8.
+// Used after retrieving the command line via NtQueryInformationProcess.
 static std::string wideToUtf8(const WCHAR* wstr, size_t wlen) {
     if (!wstr || wlen == 0) return {};
     int bytes = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wlen, nullptr, 0, nullptr, nullptr);
@@ -64,16 +97,22 @@ static std::string wideToUtf8(const WCHAR* wstr, size_t wlen) {
     WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wlen, out.data(), bytes, nullptr, nullptr);
     return out;
 }
+
+// Right-truncates a string to maxLen, appending "..." when possible.
 static std::string truncateRight(const std::string& s, size_t maxLen) {
+    if (maxLen == kNoLimit) return s;
     if (s.size() <= maxLen) return s;
     if (maxLen <= 3) return s.substr(0, maxLen);
     return s.substr(0, maxLen - 3) + "...";
 }
 
-// Normaliza espacios y elimina CR/LF/tabs
+// Normalizes whitespace: converts CR/LF/TAB to spaces, collapses repeats, trims ends.
+// Ensures cmd/bin/img fields are monoline and stable for parsers.
+// Important: when the result is empty or all spaces, returns an empty string.
 static std::string collapseWs(std::string s) {
     std::string out; out.reserve(s.size());
     bool inSpace = false;
+
     for (char c : s) {
         if (c=='\r' || c=='\n' || c=='\t') c = ' ';
         if (c==' ') {
@@ -82,74 +121,152 @@ static std::string collapseWs(std::string s) {
             out.push_back(c); inSpace = false;
         }
     }
-    // trim
+
+    // trim (safe even if out is empty or all spaces)
     const size_t first = out.find_first_not_of(' ');
     if (first == std::string::npos) return {};
     out.erase(0, first);
     const size_t last = out.find_last_not_of(' ');
     out.erase(last + 1);
+
     return out;
 }
 
-// Elimina comillas exteriores simétricas si las hay (no toca comillas internas)
-static std::string stripOuterQuotes(const std::string& s) {
-    if (s.size()>=2) {
-        char a = s.front(), b = s.back();
-        if ((a=='"' && b=='"') || (a=='\'' && b=='\'')) {
-            return s.substr(1, s.size()-2);
+// Removes symmetric outer quotes if present, without touching internal quotes.
+// Also tolerates common "broken" cases (single leading/trailing quote) to keep output clean.
+// This is output-sanitization, not a security feature.
+static std::string stripOuterQuotes(std::string s) {
+    if (s.size() >= 2) {
+        const char a = s.front();
+        const char b = s.back();
+
+        // Clean case: "..." or '...'
+        if ((a == '"' && b == '"') || (a == '\'' && b == '\'')) {
+            s = s.substr(1, s.size() - 2);
+            return s;
+        }
+
+        // Tolerant case: single quote at either end
+        if (a == '"' || a == '\'') s.erase(0, 1);
+        if (!s.empty()) {
+            const char last = s.back();
+            if (last == '"' || last == '\'') s.pop_back();
         }
     }
     return s;
 }
 
+// Removes quotes around the *first token* if it looks like a quoted path.
+// Handles:  "\"C:\\Program Files\\App\\app.exe\" --arg"  ->  "C:\\Program Files\\App\\app.exe --arg"
+static std::string stripQuotedFirstToken(std::string s) {
+    if (s.size() < 2) return s;
+
+    const char q = s.front();
+    if (q != '"' && q != '\'') return s;
+
+    const size_t end = s.find(q, 1);
+    if (end == std::string::npos) {
+        // Broken input: starts with quote but never closes -> drop the leading quote
+        s.erase(0, 1);
+        return s;
+    }
+
+    // Remove closing quote first, then opening quote (indices stay valid)
+    s.erase(end, 1);
+    s.erase(0, 1);
+    return s;
+}
+
 // -------------------- baselines --------------------
+
+// Baseline list of core Windows processes (noise suppression).
+// Anything in this set will NOT be listed under [unknown].
+// Keep this conservative: removing too much can hide interesting processes.
 static const std::unordered_set<std::string>& baselineSystem() {
     static const std::unordered_set<std::string> base = {
-            // core/session
+
+            // core / session
             "system","smss.exe","csrss.exe","wininit.exe","services.exe","lsass.exe","winlogon.exe",
-            // services/hosts
-            "svchost.exe","fontdrvhost.exe","spoolsv.exe","wudfhost.exe","dllhost.exe","audiodg.exe",
+
+            // service hosts / brokers
+            "svchost.exe","fontdrvhost.exe","spoolsv.exe","wudfhost.exe",
+            "dllhost.exe","audiodg.exe",
+
             // shell / UX
             "explorer.exe","sihost.exe","ctfmon.exe","dwm.exe","runtimebroker.exe",
             "shellexperiencehost.exe","startmenuexperiencehost.exe",
             "searchhost.exe","searchindexer.exe",
-            "systemsettings.exe","systemsettingsbroker.exe","backgroundtaskhost.exe",
-            "searchfilterhost.exe","searchprotocolhost.exe","lockapp.exe","textinputhost.exe",
-            "presentationfontcache.exe","lsaiso.exe","unsecapp.exe",
-            // consola / utilidades base del SO
+            "systemsettings.exe","systemsettingsbroker.exe",
+            "backgroundtaskhost.exe","lockapp.exe","textinputhost.exe",
+            "presentationfontcache.exe","shellhost.exe",
+
+            // console / base utilities
             "conhost.exe","taskhostw.exe","taskmgr.exe","rundll32.exe",
-            "werfault.exe","cmd.exe","powershell.exe",
-            // wmi / compat
+            "werfault.exe",
+
+            // WMI / telemetry / compatibility
             "wmiprvse.exe","compattelrunner.exe","wmiregistrationservice.exe",
-            // impresión / 32-64 bridge
+            "lsaiso.exe","unsecapp.exe",
+
+            // printing / WOW64 bridge
             "splwow64.exe",
-            // UWP framework y brokers
+
+            // UWP / SystemApps
             "applicationframehost.exe","aggregatorhost.exe","dataexchangehost.exe","dashost.exe",
-            // Hyper-V / WSL infraestructura
+            "appactions.exe","crossdeviceresume.exe","calendar.exe",
+            "phoneexperiencehost.exe","storedesktopextension.exe",
+            "pacjsworker.exe","chxsmartscreen.exe",
+
+            // security UX (still system)
+            "smartscreen.exe",
+            "microsoft.aad.brokerplugin.exe","msedgewebview2.exe",
+
+            // Hyper-V / WSL infra
             "vmcompute.exe","vmms.exe","vmwp.exe","vmmemwsl","wslinstaller.exe",
-            // WLAN infra
+
+            // WLAN / networking infra
             "wlanext.exe",
-            // componentes nativos adicionales
-            "locationnotificationwindows.exe","mmgaserver.exe","modemauthenticator.exe"
+
+            // other native components
+            "locationnotificationwindows.exe",
+            "mmgaserver.exe",
+            "modemauthenticator.exe"
     };
     return base;
 }
 
+// Baseline list of common end-user applications (noise suppression).
+// This is NOT a security allow-list; it's purely triage noise control.
 static const std::unordered_set<std::string>& baselineCommonApps() {
     static const std::unordered_set<std::string> base = {
-            // Navegadores generalistas
-            "msedge.exe","chrome.exe","firefox.exe","brave.exe","opera.exe","vivaldi.exe",
-            // Office principales y servicio ClickToRun
-            "winword.exe","excel.exe","powerpnt.exe","onenote.exe","outlook.exe","officeclicktorun.exe",
-            // IM/colaboración mainstream
+
+            // Browsers
+            "msedge.exe","chrome.exe","firefox.exe","brave.exe",
+            "opera.exe","vivaldi.exe","duckduckgo.exe",
+
+            // Browser helpers / crash handlers
+            "bravecrashhandler.exe","bravecrashhandler64.exe",
+            "duckduckgo.updater.exe",
+            "crashpad_handler.exe",
+
+            // Office / productivity
+            "winword.exe","excel.exe","powerpnt.exe","onenote.exe","outlook.exe",
+            "officeclicktorun.exe","filecoauth.exe",
+
+            // Collaboration / IM
             "teams.exe","ms-teams.exe","skype.exe","skypeapp.exe",
             "telegram.exe","slack.exe","discord.exe","whatsapp.exe","signal.exe",
-            // Terminal moderna y winget backend
-            "openconsole.exe","windowsterminal.exe","windowspackagemanagerserver.exe"
+
+            // Modern terminal / dev UX
+            "openconsole.exe","windowsterminal.exe",
+            "windowspackagemanagerserver.exe"
     };
     return base;
 }
 
+
+// Pseudo-process names sometimes shown by tooling/logs.
+// Toolhelp snapshot typically returns real image names, but this helps suppress noise.
 static const std::unordered_set<std::string>& pseudoKernelNames() {
     static const std::unordered_set<std::string> s = {
             "[system process]", "registry", "memory compression", "secure system"
@@ -158,17 +275,37 @@ static const std::unordered_set<std::string>& pseudoKernelNames() {
 }
 
 // -------------------- cmdline best-effort --------------------
-typedef LONG NTSTATUS;
-typedef NTSTATUS (NTAPI *PFN_NtQueryInformationProcess)(
+
+// Minimal NT definitions (avoids pulling full NT headers).
+using NTSTATUS = LONG;
+
+using PFN_NtQueryInformationProcess = NTSTATUS (NTAPI*)(
         HANDLE, ULONG, PVOID, ULONG, PULONG
 );
-typedef struct _UNICODE_STRING_LITE {
+
+struct UNICODE_STRING_LITE {
     USHORT Length;
     USHORT MaximumLength;
     PWSTR  Buffer;
-} UNICODE_STRING_LITE;
+};
 
-// Fallback: imagen completa (no requiere VM_READ)
+// Resolves NtQueryInformationProcess from ntdll in a way that avoids -Wcast-function-type
+static PFN_NtQueryInformationProcess resolveNtQueryInformationProcess() {
+    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+    if (!ntdll) ntdll = LoadLibraryA("ntdll.dll");
+    if (!ntdll) return nullptr;
+
+    FARPROC p = GetProcAddress(ntdll, "NtQueryInformationProcess");
+    if (!p) return nullptr;
+
+    // Avoid direct FARPROC -> function-pointer cast warning in some toolchains.
+    void* vp = reinterpret_cast<void*>(p);
+    return reinterpret_cast<PFN_NtQueryInformationProcess>(vp);
+}
+
+
+// Fallback: full image path (does not require VM_READ).
+// Requires only PROCESS_QUERY_LIMITED_INFORMATION.
 static std::string queryFullImagePathUtf8(DWORD pid) {
     HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (!h) return {};
@@ -182,16 +319,16 @@ static std::string queryFullImagePathUtf8(DWORD pid) {
     return out;
 }
 
+// Best-effort cmdline extraction via NtQueryInformationProcess(ProcessCommandLineInformation=60).
+// - No SeDebugPrivilege: low-noise profile (less friction in real environments).
+// - May fail on protected processes (PPL) or due to permissions.
+// - Attempts PROCESS_VM_READ first for compatibility; falls back to limited info.
 static std::string tryGetCmdlineUtf8(DWORD pid) {
     static PFN_NtQueryInformationProcess NtQIP = nullptr;
     static bool resolved = false;
+
     if (!resolved) {
-        HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-        if (!ntdll) ntdll = LoadLibraryA("ntdll.dll");
-        if (ntdll) {
-            FARPROC p = GetProcAddress(ntdll, "NtQueryInformationProcess");
-            NtQIP = reinterpret_cast<PFN_NtQueryInformationProcess>(p);
-        }
+        NtQIP = resolveNtQueryInformationProcess();
         resolved = true;
     }
     if (!NtQIP) return {};
@@ -204,22 +341,30 @@ static std::string tryGetCmdlineUtf8(DWORD pid) {
 
     const ULONG ProcessCommandLineInformation = 60;
     ULONG len = 0;
+
     NTSTATUS st = NtQIP(h, ProcessCommandLineInformation, nullptr, 0, &len);
     if (len == 0) { CloseHandle(h); return {}; }
 
     std::vector<BYTE> buf(len);
     st = NtQIP(h, ProcessCommandLineInformation, buf.data(), len, &len);
     CloseHandle(h);
+
     if (st < 0) return {};
     if (len < sizeof(UNICODE_STRING_LITE)) return {};
 
     auto u = reinterpret_cast<UNICODE_STRING_LITE*>(buf.data());
     if (!u->Buffer || u->Length == 0) return {};
-    size_t wlen = u->Length / sizeof(WCHAR);
+
+    const size_t wlen = static_cast<size_t>(u->Length) / sizeof(WCHAR);
     return wideToUtf8(u->Buffer, wlen);
 }
 
-// -------------------- índice SCM (PID -> ServiceInfo) --------------------
+
+// -------------------- Services tool SCM index (PID -> ServiceInfo) --------------------
+//
+// Builds a PID -> ServiceInfo index from the Service Control Manager.
+// - Heavier than a process snapshot, so it is built lazily and cached (static).
+// - Useful enrichment when cmdline cannot be read: svc/bin provides actionable context.
 static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
     static bool built = false;
     static std::unordered_map<DWORD, ServiceInfo> idx;
@@ -268,6 +413,7 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
                 }
                 CloseServiceHandle(svc);
             }
+
             ServiceInfo info;
             info.name = svcName;
             info.display = dispName;
@@ -275,6 +421,7 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
             info.extra_count = 0;
             idx.emplace(pid, std::move(info));
         } else {
+            // Multiple services can share the same PID (typical svchost grouping).
             it->second.extra_count += 1;
         }
     }
@@ -283,46 +430,64 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
     return idx;
 }
 
-// -------------------- helpers de salida --------------------
+// -------------------- output helpers --------------------
+
+// Builds a stable detection line:
+//   "[TAG] ProductName - exe=ImageName"
 static std::string buildDetectionLine(const std::string& tagLabel,
                                       const std::string& productName,
                                       const std::string& exeName,
                                       size_t maxLen = kLineMax) {
     const std::string prefix = "[" + tagLabel + "] ";
-    const std::string middle = " - exe=";
+    const std::string middle = " - ";
     size_t fixed = prefix.size() + middle.size() + exeName.size();
     size_t budgetName = (fixed >= maxLen) ? 0 : (maxLen - fixed);
+
     std::string pname = (productName.size() <= budgetName)
                         ? productName
                         : truncateRight(productName, budgetName);
+
     return prefix + pname + middle + exeName;
 }
 
+// Builds an "unknown process" line:
+//   "- exeLower | cmd=..."
+//   "- exeLower | svc=... | bin=..."
+//   "- exeLower | img=..."
+// Field selection is best-effort, in priority order.
 static std::string buildUnknownLine(const std::string& exeLower,
                                     DWORD pid,
                                     size_t maxLen = kLineMax)
 {
+    // Stable format and priority:
+    //   1) cmd= (best triage signal)
+    //   2) SCM svc/bin (when cmdline is protected)
+    //   3) img= full path (last resort)
+
     std::string line = "- " + exeLower;
 
     // 1) cmd=
     std::string cmd = tryGetCmdlineUtf8(pid);
     if (!cmd.empty()) {
-        cmd = collapseWs(stripOuterQuotes(cmd));
+        cmd = collapseWs(stripOuterQuotes(stripQuotedFirstToken(cmd)));
         const std::string pfx = " | cmd=";
-        size_t fixed = line.size() + pfx.size();
-        size_t budget = (fixed >= maxLen) ? 0 : (maxLen - fixed);
+
+        const size_t fixed = line.size() + pfx.size();
+        const size_t budget = (fixed >= maxLen) ? 0 : (maxLen - fixed);
         if (budget > 0) line += pfx + truncateRight(cmd, budget);
         return line;
     }
 
-    // 2) Fallback: SCM (svc=/bin=)
+    // 2) SCM svc/bin
     const auto& map = serviceIndexByPid();
     auto it = map.find(pid);
     if (it != map.end()) {
-        // svc=
         std::string svc = it->second.name;
-        if (it->second.extra_count > 0) svc += "(+" + std::to_string(it->second.extra_count) + ")";
-        std::string partSvc = " | svc=" + svc;
+        if (it->second.extra_count > 0) {
+            svc += "(+" + std::to_string(it->second.extra_count) + ")";
+        }
+
+        const std::string partSvc = " | svc=" + svc;
 
         size_t budget = (line.size() >= maxLen) ? 0 : (maxLen - line.size());
         if (budget > 0) {
@@ -331,35 +496,48 @@ static std::string buildUnknownLine(const std::string& exeLower,
                 budget -= partSvc.size();
             } else {
                 const std::string pfx = " | svc=";
-                size_t avail = (budget > pfx.size()) ? (budget - pfx.size()) : 0;
+                const size_t avail = (budget > pfx.size()) ? (budget - pfx.size()) : 0;
                 line += pfx + truncateRight(svc, avail);
                 budget = 0;
             }
         }
+
         if (budget > 0 && !it->second.binary.empty()) {
+            // We sanitize whitespace/quotes for output stability.
+            std::string bin = collapseWs(stripOuterQuotes(stripQuotedFirstToken(it->second.binary)));
             const std::string pfx = " | bin=";
-            size_t fixed = line.size() + pfx.size();
-            size_t b2 = (fixed >= maxLen) ? 0 : (maxLen - fixed);
-            if (b2 > 0) line += pfx + truncateRight(it->second.binary, b2);
+
+            const size_t fixed = line.size() + pfx.size();
+            const size_t b2 = (fixed >= maxLen) ? 0 : (maxLen - fixed);
+            if (b2 > 0) line += pfx + truncateRight(bin, b2);
         }
+
         return line;
     }
 
-    // 3) Fallback suave: imagen completa
+    // 3) img= full path (QueryFullProcessImageNameA)
     std::string img = queryFullImagePathUtf8(pid);
     if (!img.empty()) {
-        img = collapseWs(stripOuterQuotes(img));
+        img = collapseWs(stripOuterQuotes(stripQuotedFirstToken(img)));
         const std::string pfx = " | img=";
-        size_t fixed = line.size() + pfx.size();
-        size_t budget = (fixed >= maxLen) ? 0 : (maxLen - fixed);
+
+        const size_t fixed = line.size() + pfx.size();
+        const size_t budget = (fixed >= maxLen) ? 0 : (maxLen - fixed);
         if (budget > 0) line += pfx + truncateRight(img, budget);
     }
+
     return line;
 }
 
-// -------------------- catálogo con TAG explícito --------------------
+// -------------------- catalog (exeLower -> products) --------------------
+//
+// Notes:
+// - Exact match on lowercased ".exe" image name.
+// - One executable may map to multiple products/labels.
+// - This catalog is intentionally opinionated: it is a triage tool, not an AV engine.
 static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& catalog() {
     static const std::unordered_map<std::string, std::vector<SecuritySoftware>> sw = {
+
             // VPN / ZTNA
             {"vpnagent.exe", { {"Cisco AnyConnect Secure Mobility Client","VPN","VPN"}, {"Cisco AnyConnect","VPN","VPN"} }},
             {"vpnui.exe",    { {"Cisco AnyConnect","VPN","VPN"} }},
@@ -380,6 +558,12 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"aoservice.exe",{ {"Citrix Secure Access Client Service","ZTNA / VPN","ZTNA"} }},
             {"appprotection.exe",{ {"Citrix App Protection","ZTNA / Anti-hooking","ZTNA"} }},
             {"updaterservice.exe",{ {"Citrix Workspace Updater (CWAUpdaterService)","ZTNA / Workspace","ZTNA"} }},
+
+            // ZTNA / CASB / DLP (Netskope)
+            {"stagentsvc.exe", {{"Netskope Client Service","ZTNA / CASB / DLP","ZTNA"}}},
+            {"stagentae.exe", {{"Netskope Agent Engine","ZTNA / CASB / DLP","ZTNA"}}},
+            {"stagentui.exe", {{"Netskope Client UI","ZTNA / CASB / DLP","ZTNA"}}},
+            {"nssm.exe", {    {"NSSM (Non-Sucking Service Manager)","Service Wrapper / Persistence Helper","OTHER"} }},
 
             // EDR / AV / Telemetry
             {"csfalconservice.exe",   { {"CrowdStrike Falcon Sensor","EDR / XDR","EDR"} }},
@@ -459,6 +643,11 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"mfeepehost.exe",{ {"McAfee Endpoint Encryption Host","Disk Encryption","ENC"} }},
             {"mdecryptservice.exe",{ {"McAfee Encryption Decrypt Service","Disk Encryption","ENC"} }},
 
+            // Microsoft Defender DLP components
+            {"dlpuseragent.exe", {{"Microsoft Defender DLP User Agent","Data Loss Prevention","DLP"}}},
+            {"mpdlpservice.exe", {{"Microsoft Defender DLP Service","Data Loss Prevention","DLP"}}},
+            {"sensedlpprocessor.exe", {{"Microsoft Defender DLP Processor","Data Loss Prevention","DLP"}}},
+
             // Symantec / Norton
             {"ccsvchst.exe",{ {"Symantec Endpoint Protection / Norton","AV / EDR","AV"} }},
             {"rtvscan.exe", { {"Symantec Endpoint Protection","AV","AV"} }},
@@ -476,7 +665,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"sophosui.exe", { {"Sophos UI","AV UI","AV"} }},
 
             // Kaspersky
-            {"avp.exe",     { {"Kaspersky AV / KES","AV / EDR","EDR"} }},
+            {"avp.exe", { {"Kaspersky AV / KES","AV / EDR","AV"} }},
             {"avpui.exe",   { {"Kaspersky UI","AV UI","AV"} }},
             {"klwtblfs.exe",{ {"Kaspersky FS Filter","AV","AV"} }},
 
@@ -515,17 +704,17 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"appcontrolagent.exe",{ {"Trend Micro Application Control Agent","Application Control","APPC"} }},
             {"hips.exe",          { {"Host Intrusion Prevention System","HIPS","HIPS"} }},
 
-            // DLP / cifrado
+            // DLP / encryption
             {"axcrypt.exe",{ {"AxCrypt","Encryption","ENC"} }},
             {"truecrypt.exe",{ {"TrueCrypt","Encryption","ENC"} }},
             {"eegoservice.exe",{ {"McAfee Endpoint Encryption Service","Disk Encryption","ENC"} }},
 
-            // Monitoring / Telemetría
+            // Monitoring / telemetry
             {"healthservice.exe",{ {"Microsoft OMS / SCOM HealthService","Monitoring","MON"} }},
             {"monitoringhost.exe",{ {"Microsoft Monitoring Agent","Monitoring","MON"} }},
             {"npmdagent.exe",{ {"SolarWinds NPM Agent","Network Monitoring","MON"} }},
 
-            // Virtualización (VMware, WSL)
+            // Virtualization (VMware, WSL)
             {"vgauthservice.exe",{ {"VMware VGAuthService","Virtualization / Guest Tools","VIRT"} }},
             {"vm3dservice.exe",  { {"VMware 3D Service","Virtualization / Guest Tools","VIRT"} }},
             {"vmtoolsd.exe",     { {"VMware Tools Daemon","Virtualization / Guest Tools","VIRT"} }},
@@ -546,16 +735,16 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"msra.exe",         { {"Windows Remote Assistance","Remote Assistance","RDP"} }},
             {"quickassist.exe",  { {"Microsoft Quick Assist","Remote Assistance","RMM"} }},
 
-            // Integridad / broker
+            // Integrity / system guard broker
             {"sgrmbroker.exe", { {"Windows System Guard Runtime Monitor Broker","System Integrity","INT"} }},
 
-            // Miscelánea útil
+            // Misc useful
             {"sbiesvc.exe",    { {"Sandboxie Service","Sandbox / Isolation","OTHER"} }},
             {"winlogbeat.exe", { {"Elastic Winlogbeat (log forwarder)","Security Telemetry","TEL"} }},
             {"mdnsresponder.exe",{ {"Bonjour Service","Network Service / mDNS","OTHER"} }},
             {"smsvchost.exe",  { {"Microsoft .NET Framework service host","Application","OTHER"} }},
 
-            // CLOUD / Sync
+            // Cloud sync clients
             {"onedrive.exe",        { {"Microsoft OneDrive","Cloud Sync / OneDrive","CLOUD"} }},
             {"googledrivefs.exe",   { {"Google Drive for Desktop","Cloud Sync / Google Drive","CLOUD"} }},
             {"dropbox.exe",         { {"Dropbox Desktop","Cloud Sync / Dropbox","CLOUD"} }},
@@ -595,22 +784,44 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"tbtp2pshortcutservice.exe",{ {"Intel Thunderbolt P2P Shortcut Service","Thunderbolt","TB"} }},
             {"thunderboltservice.exe",{ {"Intel Thunderbolt Service","Thunderbolt","TB"} }},
 
-            // Credential Managers (útiles para DFIR/Red)
+            // Credential managers (useful for DFIR / red team hygiene checks)
             {"keepass.exe",    { {"KeePass Password Safe 2","Credential Manager","CREDS"} }},
             {"keepassxc.exe",  { {"KeePassXC","Credential Manager","CREDS"} }},
             {"bitwarden.exe",  { {"Bitwarden","Credential Manager","CREDS"} }},
             {"1password.exe",  { {"1Password","Credential Manager","CREDS"} }},
+
+            // PAM / Application Control (Thycotic / Arellia)
+            {"arellia.agent.service.exe", {{"Thycotic / Arellia PAM Agent","PAM / Privileged Access","PAM"}}},
+            {"arelliaacsvc.exe", {{"Thycotic / Arellia Application Control","Application Control","APPC"}}},
+
+            // UEM / Endpoint Management (ManageEngine)
+            {"dcagentservice.exe", {{"ManageEngine Endpoint Central Agent","UEM / Inventory / Monitoring","UEM"}}},
+            {"dcinventory.exe", {{"ManageEngine Inventory Component","UEM / Inventory","UEM"}}},
+            {"dcprocessmonitor.exe", {{"ManageEngine Process Monitor","UEM / Process Monitoring","UEM"}}},
+            {"dcprocmon.exe", {{"ManageEngine Process Monitor (alt)","UEM / Process Monitoring","UEM"}}},
+            {"dcswmeter.exe", {{"ManageEngine Software Metering","UEM / Software Metering","UEM"}}},
+            {"dcondemand.exe", {{"ManageEngine On-Demand Agent","UEM / On-Demand","UEM"}}},
+            {"uesagentservice.exe", {{"ManageEngine Unified Endpoint Security Agent","UEM / Security","UEM"}}},
+
     };
     return sw;
 }
 
-// -------------------- detección principal --------------------
-bool isSecuritySoftwareRunning() {
-    SetConsoleOutputCP(65001);
+// -------------------- main detection routine --------------------
+static bool isSecuritySoftwareRunning(std::ostream& os, size_t maxLen) {
+    //    // Ensure UTF-8 output for product names containing non-ASCII characters.
+    //    SetConsoleOutputCP(65001);
 
+    // Prevent duplicate printing per executable.
     std::unordered_set<std::string> reported;
+
+    // All processes observed (lowercased image names).
     std::unordered_set<std::string> seenLower;
+
+    // Representative PID for each exe (used for metadata enrichment).
     std::map<std::string, DWORD> firstPidByExe;
+
+    // Formatted catalog matches.
     std::vector<std::string> detectionLines;
     detectionLines.reserve(128);
 
@@ -618,76 +829,124 @@ bool isSecuritySoftwareRunning() {
 
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap == INVALID_HANDLE_VALUE) return false;
-    PROCESSENTRY32 pe; pe.dwSize = sizeof(PROCESSENTRY32);
-    if (!Process32First(snap, &pe)) { CloseHandle(snap); return false; }
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    if (!Process32First(snap, &pe)) {
+        CloseHandle(snap);
+        return false;
+    }
 
     bool anySecurity = false;
 
+    // Enumerate running processes and collect:
+    // - seenLower (all image names)
+    // - firstPidByExe (representative PID per exe)
+    // - detectionLines (catalog matches)
     do {
         std::string exe(pe.szExeFile);
         std::string lower = toLower(exe);
+
         seenLower.insert(lower);
         if (firstPidByExe.find(lower) == firstPidByExe.end()) {
             firstPidByExe[lower] = pe.th32ProcessID;
         }
+
         if (reported.find(lower) == reported.end()) {
             auto it = sw.find(lower);
             if (it != sw.end()) {
                 anySecurity = true;
+
+                // A single exe can map to multiple products -> output all.
                 for (const auto& x : it->second) {
                     const std::string& tag = x.tag.empty() ? std::string("OTHER") : x.tag;
                     detectionLines.emplace_back(
-                            buildDetectionLine(tag, x.name, exe, kLineMax)
+                            buildDetectionLine(tag, x.name, exe, maxLen)
                     );
                 }
+
                 reported.insert(lower);
             }
         }
     } while (Process32Next(snap, &pe));
+
     CloseHandle(snap);
 
+    // Exclude this tool itself from the unknown list.
     const std::string selfLower = selfImageNameLower();
+
+    // Unknown processes are those not in:
+    // - catalog
+    // - system baseline
+    // - common-app baseline
+    // plus basic sanity filters (".exe", no pseudo kernel entries).
     std::vector<std::pair<std::string, DWORD>> unknown;
     unknown.reserve(seenLower.size());
 
+    const auto& pseudo  = pseudoKernelNames();
+    const auto& sysBase = baselineSystem();
+    const auto& appBase = baselineCommonApps();
+
     for (const auto& [p, pid] : firstPidByExe) {
-        if (p == selfLower || pseudoKernelNames().count(p) || 
-            sw.count(p) || baselineSystem().count(p) || baselineCommonApps().count(p)) continue;
+        if (p == selfLower) continue;
+        if (pseudo.count(p)) continue;
+        if (sw.count(p)) continue;
+        if (sysBase.count(p)) continue;
+        if (appBase.count(p)) continue;
         if (!hasExeExtension(p)) continue;
         unknown.emplace_back(p, pid);
     }
 
+    // Deterministic ordering of unknown list.
     std::sort(unknown.begin(), unknown.end(),
               [](const auto& a, const auto& b){ return a.first < b.first; });
 
-    std::cout << "\n[unknown] Non-system unknown processes (" << unknown.size() << "):" << std::endl;
+    // Emit unknown block first.
+    os << "\n[unknown] Non-system unknown processes (" << unknown.size() << "):" << std::endl;
     for (const auto& u : unknown) {
-        std::cout << buildUnknownLine(u.first, u.second, kLineMax) << std::endl;
+        os << buildUnknownLine(u.first, u.second, maxLen) << std::endl;
     }
-    std::cout << "\n---\n";
+    os << "\n---\n\n";
 
-    // Orden determinista alfabético (case-insensitive) de detecciones
     std::sort(detectionLines.begin(), detectionLines.end(),
               [](const std::string& a, const std::string& b) {
-                  std::string la = toLower(a), lb = toLower(b);
-                  return la < lb;
+                  return toLower(a) < toLower(b);
               });
 
     for (const auto& line : detectionLines) {
-        std::cout << line << std::endl;
+        os << line << std::endl;
     }
 
     return anySecurity;
 }
 
-int main() {
+// -------------------- program entry point --------------------
+int main(int argc, char** argv) {
     SetConsoleOutputCP(65001);
     std::cout << "AV_detect Version: " << VERSION << std::endl;
 
-    if (isSecuritySoftwareRunning()) {
-        std::cout << "\nFound security software process (AV, anti-malware, EDR, XDR, etc.) running." << std::endl;
-    } else {
-        std::cout << "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running." << std::endl;
+    // Optional: --full <path>
+    std::ofstream fullOut;
+    bool writeFull = false;
+    std::string fullPath;
+
+    if (argc == 3 && std::string(argv[1]) == "--full") {
+        fullPath = argv[2];
+        fullOut.open(fullPath, std::ios::out | std::ios::trunc);
+        writeFull = fullOut.is_open();
     }
+
+    const bool any = isSecuritySoftwareRunning(std::cout, kLineMax); // stdout normal (truncated)
+
+    if (writeFull) {
+        fullOut << "AV_detect Version: " << VERSION << "\n";
+        (void)isSecuritySoftwareRunning(fullOut, kNoLimit); // file full (no truncation)
+    }
+
+    std::cout << (any
+                  ? "\nFound known processes or security software processes (AV, anti-malware, EDR, XDR, etc.) running.\n"
+                  : "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running.\n");
     return 0;
 }
+
