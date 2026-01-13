@@ -83,9 +83,11 @@ static std::string collapseWs(std::string s) {
         }
     }
     // trim
-    out.erase(0, out.find_first_not_of(' '));
-    size_t last = out.find_last_not_of(' ');
-    if (last != std::string::npos) out.erase(last + 1);
+    const size_t first = out.find_first_not_of(' ');
+    if (first == std::string::npos) return {};
+    out.erase(0, first);
+    const size_t last = out.find_last_not_of(' ');
+    out.erase(last + 1);
     return out;
 }
 
