@@ -11,18 +11,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: true
-          fetch-depth: 1
-
-      - name: Diagnostic
-        shell: bash
-        run: |
-          echo "SHA: $(git rev-parse HEAD)"
-          echo "--- main.cpp lines 28-52 ---"
-          sed -n '28,52p' main.cpp
-          echo "--- CMakeLists.txt ---"
-          cat CMakeLists.txt
 
       - name: Configure CMake (MSVC Release)
         run: cmake -S . -B build
@@ -30,14 +18,11 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Find and verify binary
-        shell: cmd
-        run: |
-          dir /s /b build\av_detect.exe
-          for /r build %%f in (av_detect.exe) do "%%f"
+      - name: Verify binary
+        run: build\bin\Release\av_detect.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: av_detect-windows-x64
-          path: build/**/av_detect.exe
+          path: build/bin/Release/av_detect.exe
