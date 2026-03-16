@@ -315,29 +315,37 @@ static const std::unordered_set<std::string>& pseudoKernelNames() {
 // Minimal NT definitions (avoids pulling full NT headers).
 using NTSTATUS = LONG;
 
-using PFN_NtQueryInformationProcess = NTSTATUS (NTAPI*)(
-        HANDLE, ULONG, PVOID, ULONG, PULONG
-);
-
 struct UNICODE_STRING_LITE {
     USHORT Length;
     USHORT MaximumLength;
     PWSTR  Buffer;
 };
 
-// Resolves NtQueryInformationProcess from ntdll in a way that avoids -Wcast-function-type
-static PFN_NtQueryInformationProcess resolveNtQueryInformationProcess() {
-    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
-    if (!ntdll) ntdll = LoadLibraryA("ntdll.dll");
-    if (!ntdll) return nullptr;
-
-    FARPROC p = GetProcAddress(ntdll, "NtQueryInformationProcess");
-    if (!p) return nullptr;
-
-    // Avoid direct FARPROC -> function-pointer cast warning in some toolchains.
-    void* vp = reinterpret_cast<void*>(p);
-    return reinterpret_cast<PFN_NtQueryInformationProcess>(vp);
+#ifdef __MINGW32__
+// MinGW: direct import from ntdll (linked via -lntdll, cleaner import table).
+extern "C" __declspec(dllimport) NTSTATUS NTAPI NtQueryInformationProcess(
+        HANDLE ProcessHandle,
+        ULONG ProcessInformationClass,
+        PVOID ProcessInformation,
+        ULONG ProcessInformationLength,
+        PULONG ReturnLength
+);
+#else
+// MSVC: ntdll.lib from the SDK does not export Nt* functions,
+// so we resolve at runtime. Wrapped as a static function with the same
+// name so callers don't need to care which path is used.
+using PFN_NtQIP_ = NTSTATUS (NTAPI*)(HANDLE, ULONG, PVOID, ULONG, PULONG);
+static PFN_NtQIP_ resolveNtQIP_() {
+    FARPROC p = GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+    return reinterpret_cast<PFN_NtQIP_>(reinterpret_cast<void*>(p));
 }
+static NTSTATUS NtQueryInformationProcess(
+        HANDLE h, ULONG cls, PVOID info, ULONG len, PULONG ret) {
+    static PFN_NtQIP_ fn = resolveNtQIP_();
+    if (!fn) return static_cast<NTSTATUS>(-1);
+    return fn(h, cls, info, len, ret);
+}
+#endif
 
 
 // Fallback: full image path (does not require VM_READ).
@@ -359,15 +367,6 @@ static std::string queryFullImagePathUtf8(DWORD pid) {
 // - May fail on protected processes (PPL) or due to permissions.
 // - Attempts PROCESS_VM_READ first for compatibility; falls back to limited info.
 static std::string tryGetCmdlineUtf8(DWORD pid) {
-    static PFN_NtQueryInformationProcess NtQIP = nullptr;
-    static bool resolved = false;
-
-    if (!resolved) {
-        NtQIP = resolveNtQueryInformationProcess();
-        resolved = true;
-    }
-    if (!NtQIP) return {};
-
     HandleGuard h(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pid));
     if (!h) {
         h = HandleGuard(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
@@ -377,11 +376,11 @@ static std::string tryGetCmdlineUtf8(DWORD pid) {
     const ULONG ProcessCommandLineInformation = 60;
     ULONG len = 0;
 
-    NtQIP(h, ProcessCommandLineInformation, nullptr, 0, &len);
+    NtQueryInformationProcess(h, ProcessCommandLineInformation, nullptr, 0, &len);
     if (len == 0) return {};
 
     std::vector<BYTE> buf(len);
-    NTSTATUS st = NtQIP(h, ProcessCommandLineInformation, buf.data(), len, &len);
+    NTSTATUS st = NtQueryInformationProcess(h, ProcessCommandLineInformation, buf.data(), len, &len);
 
     if (st < 0) return {};
     if (len < sizeof(UNICODE_STRING_LITE)) return {};

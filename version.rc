@@ -1,5 +1,9 @@
 #include <winver.h>
 
+// Embed application manifest
+#define RT_MANIFEST 24
+1 RT_MANIFEST "av_detect.manifest"
+
 #ifndef VERSION_MAJOR
 #define VERSION_MAJOR 2
 #endif

@@ -15,16 +15,23 @@ add_definitions(
     -DVERSION_PATCH=${VERSION_PATCH}
 )
 
-# Opciones de compilacion
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-
-# Strip en Release (elimina secciones DWARF que disparan heuristicas AV)
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
+# Flags segun compilador
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
+endif()
 
 # Directorio de salida
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Ejecutable con recurso de version
+# Ejecutable con recurso de version y manifest
 enable_language(RC)
 add_executable(av_detect main.cpp version.rc)
+
+# MinGW puede linkear ntdll directamente; MSVC resuelve en runtime
+if(NOT MSVC)
+    target_link_libraries(av_detect ntdll)
+endif()
