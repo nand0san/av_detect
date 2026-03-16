@@ -11,12 +11,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Configure CMake (MSVC Release)
         run: cmake -S . -B build
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --clean-first
 
       - name: Find and verify binary
         shell: cmd
