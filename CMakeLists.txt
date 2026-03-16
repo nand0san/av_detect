@@ -17,6 +17,7 @@ add_definitions(
 
 # Flags segun compilador
 if(MSVC)
+    add_definitions(-DNOMINMAX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
