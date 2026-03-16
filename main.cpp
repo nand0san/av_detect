@@ -48,7 +48,7 @@
 // Soft limit for characters per output line (keeps stdout compact and parser-friendly).
 constexpr size_t kLineMax = 120;
 
-constexpr size_t kNoLimit = std::numeric_limits<size_t>::max();
+constexpr size_t kNoLimit = (std::numeric_limits<size_t>::max)();
 
 // Processes Catalog entry for a known security-related executable.
 struct SecuritySoftware {
