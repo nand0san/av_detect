@@ -13,18 +13,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configure CMake (MSVC Release)
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build
 
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Verify binary
+      - name: Find and verify binary
+        shell: cmd
         run: |
-          dir build\bin\Release\av_detect.exe
-          build\bin\Release\av_detect.exe
+          dir /s /b build\av_detect.exe
+          for /r build %%f in (av_detect.exe) do "%%f"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: av_detect-windows-x64
-          path: build/bin/Release/av_detect.exe
+          path: build/**/av_detect.exe
