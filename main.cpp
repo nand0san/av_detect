@@ -1,4 +1,4 @@
-// av_detect.cpp — v2.2.0
+// av_detect.cpp -- v2.3.0
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -34,7 +34,13 @@
 #include <cstdint>
 
 #ifndef VERSION
-#define VERSION "v2.2.0"
+#ifdef VERSION_MAJOR
+#define _VS2(a,b,c) "v" #a "." #b "." #c
+#define _VS(a,b,c)  _VS2(a,b,c)
+#define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+#else
+#define VERSION "v2.3.0"
+#endif
 #endif
 
 
@@ -57,6 +63,36 @@ struct ServiceInfo {
     std::string display;   // Display name (not currently printed)
     std::string binary;    // Binary path (QueryServiceConfigA)
     int extra_count = 0;   // Additional services sharing this PID (svchost groups, etc.)
+};
+
+// -------------------- RAII guards --------------------
+
+struct HandleGuard {
+    HANDLE h = nullptr;
+    explicit HandleGuard(HANDLE h = nullptr) : h(h) {}
+    ~HandleGuard() { reset(); }
+    HandleGuard(const HandleGuard&) = delete;
+    HandleGuard& operator=(const HandleGuard&) = delete;
+    HandleGuard(HandleGuard&& o) noexcept : h(o.h) { o.h = nullptr; }
+    HandleGuard& operator=(HandleGuard&& o) noexcept {
+        if (this != &o) { reset(); h = o.h; o.h = nullptr; }
+        return *this;
+    }
+    void reset() {
+        if (h && h != INVALID_HANDLE_VALUE) { CloseHandle(h); h = nullptr; }
+    }
+    operator HANDLE() const { return h; }
+    explicit operator bool() const { return h && h != INVALID_HANDLE_VALUE; }
+};
+
+struct ScHandleGuard {
+    SC_HANDLE h = nullptr;
+    explicit ScHandleGuard(SC_HANDLE h = nullptr) : h(h) {}
+    ~ScHandleGuard() { if (h) CloseServiceHandle(h); }
+    ScHandleGuard(const ScHandleGuard&) = delete;
+    ScHandleGuard& operator=(const ScHandleGuard&) = delete;
+    operator SC_HANDLE() const { return h; }
+    explicit operator bool() const { return h != nullptr; }
 };
 
 // -------------------- utilities --------------------
@@ -195,18 +231,18 @@ static const std::unordered_set<std::string>& baselineSystem() {
             // shell / UX
             "explorer.exe","sihost.exe","ctfmon.exe","dwm.exe","runtimebroker.exe",
             "shellexperiencehost.exe","startmenuexperiencehost.exe",
-            "searchhost.exe","searchindexer.exe",
+            "searchhost.exe","searchindexer.exe","searchprotocolhost.exe",
             "systemsettings.exe","systemsettingsbroker.exe",
             "backgroundtaskhost.exe","lockapp.exe","textinputhost.exe",
             "presentationfontcache.exe","shellhost.exe",
 
             // console / base utilities
-            "conhost.exe","taskhostw.exe","taskmgr.exe","rundll32.exe",
+            "cmd.exe","conhost.exe","taskhostw.exe","taskmgr.exe","rundll32.exe",
             "werfault.exe",
 
             // WMI / telemetry / compatibility
-            "wmiprvse.exe","compattelrunner.exe","wmiregistrationservice.exe",
-            "lsaiso.exe","unsecapp.exe",
+            "wmiprvse.exe","wmiapsrv.exe","compattelrunner.exe","wmiregistrationservice.exe",
+            "lsaiso.exe","ngciso.exe","unsecapp.exe",
 
             // printing / WOW64 bridge
             "splwow64.exe",
@@ -307,15 +343,14 @@ static PFN_NtQueryInformationProcess resolveNtQueryInformationProcess() {
 // Fallback: full image path (does not require VM_READ).
 // Requires only PROCESS_QUERY_LIMITED_INFORMATION.
 static std::string queryFullImagePathUtf8(DWORD pid) {
-    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    HandleGuard h(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
     if (!h) return {};
     char buf[MAX_PATH];
     DWORD sz = MAX_PATH;
     std::string out;
-    if (QueryFullProcessImageNameA(h, 0, buf, &sz) && sz>0) {
-        out.assign(buf, buf+sz);
+    if (QueryFullProcessImageNameA(h, 0, buf, &sz) && sz > 0) {
+        out.assign(buf, buf + sz);
     }
-    CloseHandle(h);
     return out;
 }
 
@@ -333,21 +368,20 @@ static std::string tryGetCmdlineUtf8(DWORD pid) {
     }
     if (!NtQIP) return {};
 
-    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    HandleGuard h(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pid));
     if (!h) {
-        h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+        h = HandleGuard(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
         if (!h) return {};
     }
 
     const ULONG ProcessCommandLineInformation = 60;
     ULONG len = 0;
 
-    NTSTATUS st = NtQIP(h, ProcessCommandLineInformation, nullptr, 0, &len);
-    if (len == 0) { CloseHandle(h); return {}; }
+    NtQIP(h, ProcessCommandLineInformation, nullptr, 0, &len);
+    if (len == 0) return {};
 
     std::vector<BYTE> buf(len);
-    st = NtQIP(h, ProcessCommandLineInformation, buf.data(), len, &len);
-    CloseHandle(h);
+    NTSTATUS st = NtQIP(h, ProcessCommandLineInformation, buf.data(), len, &len);
 
     if (st < 0) return {};
     if (len < sizeof(UNICODE_STRING_LITE)) return {};
@@ -355,7 +389,12 @@ static std::string tryGetCmdlineUtf8(DWORD pid) {
     auto u = reinterpret_cast<UNICODE_STRING_LITE*>(buf.data());
     if (!u->Buffer || u->Length == 0) return {};
 
+    // Validate that Buffer points within our allocation
+    const auto* allocStart = reinterpret_cast<const WCHAR*>(buf.data());
+    const auto* allocEnd   = reinterpret_cast<const WCHAR*>(buf.data() + len);
     const size_t wlen = static_cast<size_t>(u->Length) / sizeof(WCHAR);
+    if (u->Buffer < allocStart || u->Buffer + wlen > allocEnd) return {};
+
     return wideToUtf8(u->Buffer, wlen);
 }
 
@@ -371,7 +410,7 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
     if (built) return idx;
     built = true;
 
-    SC_HANDLE scm = OpenSCManagerA(nullptr, nullptr, SC_MANAGER_ENUMERATE_SERVICE);
+    ScHandleGuard scm(OpenSCManagerA(nullptr, nullptr, SC_MANAGER_ENUMERATE_SERVICE));
     if (!scm) return idx;
 
     DWORD bytesNeeded = 0, count = 0, resume = 0;
@@ -379,13 +418,12 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
             scm, SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_STATE_ALL,
             nullptr, 0, &bytesNeeded, &count, &resume, nullptr
     );
-    if (bytesNeeded == 0) { CloseServiceHandle(scm); return idx; }
+    if (bytesNeeded == 0) return idx;
 
     std::vector<BYTE> buf(bytesNeeded);
     if (!EnumServicesStatusExA(
             scm, SC_ENUM_PROCESS_INFO, SERVICE_WIN32, SERVICE_STATE_ALL,
             buf.data(), (DWORD)buf.size(), &bytesNeeded, &count, &resume, nullptr)) {
-        CloseServiceHandle(scm);
         return idx;
     }
 
@@ -400,7 +438,7 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
         auto it = idx.find(pid);
         if (it == idx.end()) {
             std::string binary;
-            SC_HANDLE svc = OpenServiceA(scm, svcName, SERVICE_QUERY_CONFIG);
+            ScHandleGuard svc(OpenServiceA(scm, svcName, SERVICE_QUERY_CONFIG));
             if (svc) {
                 DWORD need = 0;
                 QueryServiceConfigA(svc, nullptr, 0, &need);
@@ -411,7 +449,6 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
                         if (cfg->lpBinaryPathName) binary = cfg->lpBinaryPathName;
                     }
                 }
-                CloseServiceHandle(svc);
             }
 
             ServiceInfo info;
@@ -421,12 +458,10 @@ static const std::unordered_map<DWORD, ServiceInfo>& serviceIndexByPid() {
             info.extra_count = 0;
             idx.emplace(pid, std::move(info));
         } else {
-            // Multiple services can share the same PID (typical svchost grouping).
             it->second.extra_count += 1;
         }
     }
 
-    CloseServiceHandle(scm);
     return idx;
 }
 
@@ -450,26 +485,31 @@ static std::string buildDetectionLine(const std::string& tagLabel,
     return prefix + pname + middle + exeName;
 }
 
-// Builds an "unknown process" line:
+// Pre-fetched enrichment data for an unknown process.
+struct UnknownProcess {
+    std::string exeLower;
+    DWORD pid = 0;
+    std::string cmdline;
+    bool hasService = false;
+    std::string svcName;
+    int svcExtraCount = 0;
+    std::string svcBinary;
+    std::string imagePath;
+};
+
+// Builds an "unknown process" line from pre-fetched data:
 //   "- exeLower | cmd=..."
 //   "- exeLower | svc=... | bin=..."
 //   "- exeLower | img=..."
 // Field selection is best-effort, in priority order.
-static std::string buildUnknownLine(const std::string& exeLower,
-                                    DWORD pid,
+static std::string buildUnknownLine(const UnknownProcess& proc,
                                     size_t maxLen = kLineMax)
 {
-    // Stable format and priority:
-    //   1) cmd= (best triage signal)
-    //   2) SCM svc/bin (when cmdline is protected)
-    //   3) img= full path (last resort)
+    std::string line = "- " + proc.exeLower;
 
-    std::string line = "- " + exeLower;
-
-    // 1) cmd=
-    std::string cmd = tryGetCmdlineUtf8(pid);
-    if (!cmd.empty()) {
-        cmd = collapseWs(stripOuterQuotes(stripQuotedFirstToken(cmd)));
+    // 1) cmd= (best triage signal)
+    if (!proc.cmdline.empty()) {
+        std::string cmd = collapseWs(stripOuterQuotes(stripQuotedFirstToken(proc.cmdline)));
         const std::string pfx = " | cmd=";
 
         const size_t fixed = line.size() + pfx.size();
@@ -479,12 +519,10 @@ static std::string buildUnknownLine(const std::string& exeLower,
     }
 
     // 2) SCM svc/bin
-    const auto& map = serviceIndexByPid();
-    auto it = map.find(pid);
-    if (it != map.end()) {
-        std::string svc = it->second.name;
-        if (it->second.extra_count > 0) {
-            svc += "(+" + std::to_string(it->second.extra_count) + ")";
+    if (proc.hasService) {
+        std::string svc = proc.svcName;
+        if (proc.svcExtraCount > 0) {
+            svc += "(+" + std::to_string(proc.svcExtraCount) + ")";
         }
 
         const std::string partSvc = " | svc=" + svc;
@@ -502,23 +540,21 @@ static std::string buildUnknownLine(const std::string& exeLower,
             }
         }
 
-        if (budget > 0 && !it->second.binary.empty()) {
-            // We sanitize whitespace/quotes for output stability.
-            std::string bin = collapseWs(stripOuterQuotes(stripQuotedFirstToken(it->second.binary)));
+        if (budget > 0 && !proc.svcBinary.empty()) {
+            std::string bin = collapseWs(stripOuterQuotes(stripQuotedFirstToken(proc.svcBinary)));
             const std::string pfx = " | bin=";
 
-            const size_t fixed = line.size() + pfx.size();
-            const size_t b2 = (fixed >= maxLen) ? 0 : (maxLen - fixed);
+            const size_t fixed2 = line.size() + pfx.size();
+            const size_t b2 = (fixed2 >= maxLen) ? 0 : (maxLen - fixed2);
             if (b2 > 0) line += pfx + truncateRight(bin, b2);
         }
 
         return line;
     }
 
-    // 3) img= full path (QueryFullProcessImageNameA)
-    std::string img = queryFullImagePathUtf8(pid);
-    if (!img.empty()) {
-        img = collapseWs(stripOuterQuotes(stripQuotedFirstToken(img)));
+    // 3) img= full path
+    if (!proc.imagePath.empty()) {
+        std::string img = collapseWs(stripOuterQuotes(stripQuotedFirstToken(proc.imagePath)));
         const std::string pfx = " | img=";
 
         const size_t fixed = line.size() + pfx.size();
@@ -539,7 +575,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
     static const std::unordered_map<std::string, std::vector<SecuritySoftware>> sw = {
 
             // VPN / ZTNA
-            {"vpnagent.exe", { {"Cisco AnyConnect Secure Mobility Client","VPN","VPN"}, {"Cisco AnyConnect","VPN","VPN"} }},
+            {"vpnagent.exe", { {"Cisco AnyConnect / Secure Client","VPN","VPN"} }},
             {"vpnui.exe",    { {"Cisco AnyConnect","VPN","VPN"} }},
             {"concentr.exe", { {"Palo Alto Networks GlobalProtect","VPN","VPN"} }},
             {"pangps.exe",   { {"Palo Alto Networks GlobalProtect","VPN","VPN"} }},
@@ -558,6 +594,35 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"aoservice.exe",{ {"Citrix Secure Access Client Service","ZTNA / VPN","ZTNA"} }},
             {"appprotection.exe",{ {"Citrix App Protection","ZTNA / Anti-hooking","ZTNA"} }},
             {"updaterservice.exe",{ {"Citrix Workspace Updater (CWAUpdaterService)","ZTNA / Workspace","ZTNA"} }},
+
+            // Pulse Secure / Ivanti
+            {"pulse.exe",        { {"Pulse Secure VPN Client","VPN","VPN"} }},
+            {"pulsesecureservice.exe",{ {"Pulse Secure Service","VPN","VPN"} }},
+
+            // Cisco Secure Client (rebrand of AnyConnect)
+            {"csc_iseagent.exe", { {"Cisco Secure Client ISE Agent","ZTNA / NAC","ZTNA"} }},
+            {"csc_iseposture.exe",{ {"Cisco Secure Client ISE Posture","ZTNA / NAC","ZTNA"} }},
+            {"csc_ui.exe",       { {"Cisco Secure Client UI","VPN / ZTNA","VPN"} }},
+
+            // OpenVPN (GUI)
+            {"openvpn-gui.exe",  { {"OpenVPN GUI","VPN","VPN"} }},
+
+            // Citrix Workspace / ICA Client
+            {"receiver.exe",     { {"Citrix Workspace Receiver","VDI / ZTNA","ZTNA"} }},
+            {"selfservice.exe",  { {"Citrix Workspace Self-Service","VDI / ZTNA","ZTNA"} }},
+            {"selfserviceplugin.exe",{ {"Citrix Workspace Self-Service Plugin","VDI / ZTNA","ZTNA"} }},
+            {"wfcrun32.exe",     { {"Citrix ICA Client Runtime","VDI / ZTNA","ZTNA"} }},
+            {"ssonsvr.exe",      { {"Citrix Single Sign-On","VDI / ZTNA","ZTNA"} }},
+            {"redirector.exe",   { {"Citrix Redirector","VDI / ZTNA","ZTNA"} }},
+            {"authmansvr.exe",   { {"Citrix Authentication Manager","VDI / ZTNA","ZTNA"} }},
+            {"analyticssrv.exe", { {"Citrix Analytics Service","VDI / ZTNA","ZTNA"} }},
+
+            // Zscaler ZDP (Digital Experience) + core services
+            {"zdpapp.exe",       { {"Zscaler Digital Experience App","ZTNA / DX Monitoring","ZTNA"} }},
+            {"zdpclassifier.exe",{ {"Zscaler Digital Experience Classifier","ZTNA / DX Monitoring","ZTNA"} }},
+            {"zdpservice.exe",   { {"Zscaler Digital Experience Service","ZTNA / DX Monitoring","ZTNA"} }},
+            {"zsaservice.exe",   { {"Zscaler Service Agent","ZTNA / SWG","ZTNA"} }},
+            {"zsatunnel.exe",    { {"Zscaler Tunnel Agent","ZTNA / SWG","ZTNA"} }},
 
             // ZTNA / CASB / DLP (Netskope)
             {"stagentsvc.exe", {{"Netskope Client Service","ZTNA / CASB / DLP","ZTNA"}}},
@@ -589,6 +654,8 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"sentinelstaticengine.exe",{ {"SentinelOne Static Engine","EDR / XDR","EDR"} }},
             {"sentinelstaticenginescanner.exe",{ {"SentinelOne Static Engine Scanner","EDR / XDR","EDR"} }},
             {"sentinelmemoryscanner.exe",{ {"SentinelOne Memory Scanner","EDR / XDR","EDR"} }},
+            {"sentinelhelperservice.exe",{ {"SentinelOne Helper Service","EDR / XDR","EDR"} }},
+            {"sentinelui.exe",   { {"SentinelOne UI","EDR / XDR","EDR"} }},
 
             // Cortex XDR (Traps/Cyvera)
             {"cyserver.exe",   { {"Cortex XDR Agent (protected)","EDR / XDR","EDR"} }},
@@ -642,6 +709,22 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"dlpsensor.exe",{ {"McAfee DLP Sensor","DLP","DLP"} }},
             {"mfeepehost.exe",{ {"McAfee Endpoint Encryption Host","Disk Encryption","ENC"} }},
             {"mdecryptservice.exe",{ {"McAfee Encryption Decrypt Service","Disk Encryption","ENC"} }},
+
+            // McAfee / Trellix DLP
+            {"fcag.exe",         { {"McAfee/Trellix DLP Agent","DLP","DLP"} }},
+            {"fcags.exe",        { {"McAfee/Trellix DLP Agent Service","DLP","DLP"} }},
+            {"fcagswd.exe",      { {"McAfee/Trellix DLP Agent Watchdog","DLP","DLP"} }},
+            {"fcnm.exe",         { {"McAfee/Trellix DLP Network Monitor","DLP","DLP"} }},
+            {"fcom.exe",         { {"McAfee/Trellix DLP Orchestrator","DLP","DLP"} }},
+
+            // McAfee Endpoint Encryption (extra components)
+            {"epepcmonitor.exe", { {"McAfee Endpoint Encryption PC Monitor","Disk Encryption","ENC"} }},
+            {"toast32.exe",      { {"McAfee Endpoint Encryption Notification","Disk Encryption","ENC"} }},
+
+            // McAfee / Trellix Agent (extra components)
+            {"macompatsvc.exe",  { {"McAfee Agent Compatibility Service","AV / Agent","AV"} }},
+            {"updaterui.exe",    { {"McAfee Agent Updater UI","AV / Agent","AV"} }},
+            {"mctray.exe",       { {"McAfee Agent Tray","AV / Agent","AV"} }},
 
             // Microsoft Defender DLP components
             {"dlpuseragent.exe", {{"Microsoft Defender DLP User Agent","Data Loss Prevention","DLP"}}},
@@ -713,6 +796,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"healthservice.exe",{ {"Microsoft OMS / SCOM HealthService","Monitoring","MON"} }},
             {"monitoringhost.exe",{ {"Microsoft Monitoring Agent","Monitoring","MON"} }},
             {"npmdagent.exe",{ {"SolarWinds NPM Agent","Network Monitoring","MON"} }},
+            {"nxlog.exe",        { {"nxlog Log Forwarder","Log Collection / SIEM","TEL"} }},
 
             // Virtualization (VMware, WSL)
             {"vgauthservice.exe",{ {"VMware VGAuthService","Virtualization / Guest Tools","VIRT"} }},
@@ -734,6 +818,15 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"msrdc.exe",  { {"Microsoft Remote Desktop Client (Modern)","RDP","RDP"} }},
             {"msra.exe",         { {"Windows Remote Assistance","Remote Assistance","RDP"} }},
             {"quickassist.exe",  { {"Microsoft Quick Assist","Remote Assistance","RMM"} }},
+
+            // TeamViewer (client + helpers)
+            {"teamviewer.exe",   { {"TeamViewer Client","Remote Control / RMM","RMM"} }},
+            {"tv_w32.exe",       { {"TeamViewer Helper (32-bit)","Remote Control / RMM","RMM"} }},
+            {"tv_x64.exe",       { {"TeamViewer Helper (64-bit)","Remote Control / RMM","RMM"} }},
+
+            // IBM Tivoli Remote Control
+            {"trc_base.exe",     { {"IBM Tivoli Remote Control Service","Remote Control / RMM","RMM"} }},
+            {"trc_gui.exe",      { {"IBM Tivoli Remote Control GUI","Remote Control / RMM","RMM"} }},
 
             // Integrity / system guard broker
             {"sgrmbroker.exe", { {"Windows System Guard Runtime Monitor Broker","System Integrity","INT"} }},
@@ -773,6 +866,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"tposd.exe",        { {"Lenovo On-Screen Display","OEM OSD","OEM"} }},
             {"igfxcuiservice.exe",{ {"Intel Graphics CUI Service","GPU Runtime","GPU"} }},
             {"igfxem.exe",       { {"Intel Graphics EM","GPU Runtime","GPU"} }},
+            {"oneapp.igcc.winservice.exe",{ {"Intel Graphics Command Center Service","GPU Runtime","GPU"} }},
             {"intelcphdcpsvc.exe",{ {"Intel Content Protection HDCP Service","DRM / Content Protection","DRM"} }},
             {"intelcphecisvc.exe",{ {"Intel Component Helper Service","DRM / Content Protection","DRM"} }},
             {"ipoverusbsvc.exe", { {"Microsoft IP over USB","USB networking","USB"} }},
@@ -780,9 +874,35 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"rtkauduservice64.exe",{ {"Realtek Audio Universal Service","Audio Driver","AUDIO"} }},
             {"ss_conn_service.exe",{ {"Samsung USB Driver Service","USB / Android","USB"} }},
             {"ss_conn_service2.exe",{ {"Samsung USB Driver Service (alt)","USB / Android","USB"} }},
+
+            // OEM / Synaptics
+            {"syntpenh.exe",     { {"Synaptics TouchPad Enhancements","OEM Input","OEM"} }},
+            {"syntpenhservice.exe",{ {"Synaptics TouchPad Service","OEM Input","OEM"} }},
             {"synrpcserver.exe", { {"Synology Assistant RPC Service","NAS Discovery","NAS"} }},
             {"tbtp2pshortcutservice.exe",{ {"Intel Thunderbolt P2P Shortcut Service","Thunderbolt","TB"} }},
             {"thunderboltservice.exe",{ {"Intel Thunderbolt Service","Thunderbolt","TB"} }},
+
+            // OEM / Lenovo (additional)
+            {"lenovoaiccloader.exe",{ {"Lenovo AI Core Components","OEM Configuration","OEM"} }},
+            {"lenovovisionservice.exe",{ {"Lenovo Vision Service","OEM Camera/Vision","OEM"} }},
+            {"smartstandby.exe", { {"Lenovo Smart Standby","OEM Power","OEM"} }},
+            {"litssvc.exe",      { {"Lenovo Intelligent Thermal Solution","OEM Thermal","OEM"} }},
+            {"epdctrl.exe",      { {"Lenovo ePrivacy Display Control","OEM Privacy Screen","OEM"} }},
+            {"epdservice.exe",   { {"Lenovo ePrivacy Display Service","OEM Privacy Screen","OEM"} }},
+            {"dockmgr.exe",      { {"Lenovo Dock Manager","OEM Docking","OEM"} }},
+            {"dockmgr.svc.exe",  { {"Lenovo Dock Manager Service","OEM Docking","OEM"} }},
+            {"easyresume.exe",   { {"Lenovo Instant On / EasyResume","OEM Power","OEM"} }},
+
+            // OEM / Intel (additional)
+            {"intelaudioservice.exe",{ {"Intel Audio Service","Audio Driver","AUDIO"} }},
+            {"ipf_helper.exe",   { {"Intel Platform Framework Helper","OEM Thermal/Power","OEM"} }},
+            {"ipf_uf.exe",       { {"Intel Platform Framework User-Mode","OEM Thermal/Power","OEM"} }},
+            {"ipfsvc.exe",       { {"Intel Platform Framework Service","OEM Thermal/Power","OEM"} }},
+            {"lms.exe",          { {"Intel AMT Local Management Service","OEM Management","OEM"} }},
+
+            // Audio (additional)
+            {"elevoccontrolservice.exe",{ {"Elevoc Audio Control Service","Audio Processing","AUDIO"} }},
+            {"senaryaudioapp.svc.exe",{ {"Senary Audio Service","Audio Processing","AUDIO"} }},
 
             // Credential managers (useful for DFIR / red team hygiene checks)
             {"keepass.exe",    { {"KeePass Password Safe 2","Credential Manager","CREDS"} }},
@@ -803,52 +923,56 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"dcondemand.exe", {{"ManageEngine On-Demand Agent","UEM / On-Demand","UEM"}}},
             {"uesagentservice.exe", {{"ManageEngine Unified Endpoint Security Agent","UEM / Security","UEM"}}},
 
+            // Microsoft Endpoint Management (SCCM / Intune)
+            {"ccmexec.exe",      { {"Microsoft SCCM Client","UEM / Endpoint Management","UEM"} }},
+            {"scnotification.exe",{ {"Microsoft SCCM Notification","UEM / Endpoint Management","UEM"} }},
+            {"microsoft.management.services.intunewindowsagent.exe",{ {"Microsoft Intune Management Agent","UEM / Endpoint Management","UEM"} }},
+
+            // Vintegris ModuloM (authentication / security)
+            {"rtocustodio.exe",  { {"Vintegris ModuloM Security Agent","Authentication / Security","OTHER"} }},
+            {"rtosecstartsrv.exe",{ {"Vintegris ModuloM Security Service","Authentication / Security","OTHER"} }},
+
     };
     return sw;
 }
 
-// -------------------- main detection routine --------------------
-static bool isSecuritySoftwareRunning(std::ostream& os, size_t maxLen) {
-    //    // Ensure UTF-8 output for product names containing non-ASCII characters.
-    //    SetConsoleOutputCP(65001);
+// -------------------- scan result types --------------------
 
-    // Prevent duplicate printing per executable.
+struct DetectionEntry {
+    std::string tag;
+    std::string productName;
+    std::string exeName;     // original case
+    std::string sortKey;     // pre-computed lowercase for sorting (#7)
+};
+
+struct ScanResult {
+    std::vector<DetectionEntry> detections;
+    std::vector<UnknownProcess> unknowns;
+    bool anySecurity = false;
+};
+
+// -------------------- process scanning --------------------
+
+static ScanResult scanProcesses() {
+    ScanResult result;
+
     std::unordered_set<std::string> reported;
-
-    // All processes observed (lowercased image names).
-    std::unordered_set<std::string> seenLower;
-
-    // Representative PID for each exe (used for metadata enrichment).
-    std::map<std::string, DWORD> firstPidByExe;
-
-    // Formatted catalog matches.
-    std::vector<std::string> detectionLines;
-    detectionLines.reserve(128);
+    std::unordered_map<std::string, DWORD> firstPidByExe;  // #9: unordered_map
 
     const auto& sw = catalog();
 
-    HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (snap == INVALID_HANDLE_VALUE) return false;
+    HandleGuard snap(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+    if (!snap) return result;
 
     PROCESSENTRY32 pe;
     pe.dwSize = sizeof(PROCESSENTRY32);
 
-    if (!Process32First(snap, &pe)) {
-        CloseHandle(snap);
-        return false;
-    }
+    if (!Process32First(snap, &pe)) return result;
 
-    bool anySecurity = false;
-
-    // Enumerate running processes and collect:
-    // - seenLower (all image names)
-    // - firstPidByExe (representative PID per exe)
-    // - detectionLines (catalog matches)
     do {
         std::string exe(pe.szExeFile);
         std::string lower = toLower(exe);
 
-        seenLower.insert(lower);
         if (firstPidByExe.find(lower) == firstPidByExe.end()) {
             firstPidByExe[lower] = pe.th32ProcessID;
         }
@@ -856,14 +980,16 @@ static bool isSecuritySoftwareRunning(std::ostream& os, size_t maxLen) {
         if (reported.find(lower) == reported.end()) {
             auto it = sw.find(lower);
             if (it != sw.end()) {
-                anySecurity = true;
+                result.anySecurity = true;
 
-                // A single exe can map to multiple products -> output all.
                 for (const auto& x : it->second) {
-                    const std::string& tag = x.tag.empty() ? std::string("OTHER") : x.tag;
-                    detectionLines.emplace_back(
-                            buildDetectionLine(tag, x.name, exe, maxLen)
-                    );
+                    DetectionEntry entry;
+                    entry.tag = x.tag.empty() ? "OTHER" : x.tag;
+                    entry.productName = x.name;
+                    entry.exeName = exe;
+                    entry.sortKey = toLower(
+                            "[" + entry.tag + "] " + entry.productName + " - " + entry.exeName);
+                    result.detections.push_back(std::move(entry));
                 }
 
                 reported.insert(lower);
@@ -871,54 +997,74 @@ static bool isSecuritySoftwareRunning(std::ostream& os, size_t maxLen) {
         }
     } while (Process32Next(snap, &pe));
 
-    CloseHandle(snap);
+    // Sort detections using pre-computed keys (#7: no per-comparison allocation)
+    std::sort(result.detections.begin(), result.detections.end(),
+              [](const DetectionEntry& a, const DetectionEntry& b) {
+                  return a.sortKey < b.sortKey;
+              });
 
-    // Exclude this tool itself from the unknown list.
+    // Build unknown list
     const std::string selfLower = selfImageNameLower();
-
-    // Unknown processes are those not in:
-    // - catalog
-    // - system baseline
-    // - common-app baseline
-    // plus basic sanity filters (".exe", no pseudo kernel entries).
-    std::vector<std::pair<std::string, DWORD>> unknown;
-    unknown.reserve(seenLower.size());
-
     const auto& pseudo  = pseudoKernelNames();
     const auto& sysBase = baselineSystem();
     const auto& appBase = baselineCommonApps();
+    const auto& svcIdx  = serviceIndexByPid();
+
+    std::vector<std::pair<std::string, DWORD>> unknownPids;
+    unknownPids.reserve(firstPidByExe.size());
 
     for (const auto& [p, pid] : firstPidByExe) {
         if (p == selfLower) continue;
-        if (pseudo.count(p)) continue;
-        if (sw.count(p)) continue;
+        if (pseudo.count(p))  continue;
+        if (sw.count(p))      continue;
         if (sysBase.count(p)) continue;
         if (appBase.count(p)) continue;
         if (!hasExeExtension(p)) continue;
-        unknown.emplace_back(p, pid);
+        unknownPids.emplace_back(p, pid);
     }
 
-    // Deterministic ordering of unknown list.
-    std::sort(unknown.begin(), unknown.end(),
-              [](const auto& a, const auto& b){ return a.first < b.first; });
+    std::sort(unknownPids.begin(), unknownPids.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
 
-    // Emit unknown block first.
-    os << "\n[unknown] Non-system unknown processes (" << unknown.size() << "):" << std::endl;
-    for (const auto& u : unknown) {
-        os << buildUnknownLine(u.first, u.second, maxLen) << std::endl;
+    // Enrich unknown processes once (reused for both stdout and file output)
+    result.unknowns.reserve(unknownPids.size());
+    for (const auto& [exe, pid] : unknownPids) {
+        UnknownProcess up;
+        up.exeLower = exe;
+        up.pid = pid;
+
+        up.cmdline = tryGetCmdlineUtf8(pid);
+
+        if (up.cmdline.empty()) {
+            auto svcIt = svcIdx.find(pid);
+            if (svcIt != svcIdx.end()) {
+                up.hasService = true;
+                up.svcName = svcIt->second.name;
+                up.svcExtraCount = svcIt->second.extra_count;
+                up.svcBinary = svcIt->second.binary;
+            } else {
+                up.imagePath = queryFullImagePathUtf8(pid);
+            }
+        }
+
+        result.unknowns.push_back(std::move(up));
+    }
+
+    return result;
+}
+
+// -------------------- output --------------------
+
+static void printResults(std::ostream& os, const ScanResult& result, size_t maxLen) {
+    os << "\n[unknown] Non-system unknown processes (" << result.unknowns.size() << "):" << std::endl;
+    for (const auto& u : result.unknowns) {
+        os << buildUnknownLine(u, maxLen) << std::endl;
     }
     os << "\n---\n\n";
 
-    std::sort(detectionLines.begin(), detectionLines.end(),
-              [](const std::string& a, const std::string& b) {
-                  return toLower(a) < toLower(b);
-              });
-
-    for (const auto& line : detectionLines) {
-        os << line << std::endl;
+    for (const auto& d : result.detections) {
+        os << buildDetectionLine(d.tag, d.productName, d.exeName, maxLen) << std::endl;
     }
-
-    return anySecurity;
 }
 
 // -------------------- program entry point --------------------
@@ -929,22 +1075,27 @@ int main(int argc, char** argv) {
     // Optional: --full <path>
     std::ofstream fullOut;
     bool writeFull = false;
-    std::string fullPath;
 
     if (argc == 3 && std::string(argv[1]) == "--full") {
-        fullPath = argv[2];
-        fullOut.open(fullPath, std::ios::out | std::ios::trunc);
-        writeFull = fullOut.is_open();
+        fullOut.open(argv[2], std::ios::out | std::ios::trunc);
+        if (fullOut.is_open()) {
+            writeFull = true;
+        } else {
+            std::cerr << "Warning: could not open '" << argv[2] << "' for writing.\n";
+        }
     }
 
-    const bool any = isSecuritySoftwareRunning(std::cout, kLineMax); // stdout normal (truncated)
+    // Single snapshot: scan once, output twice (#4: consistent results)
+    const ScanResult result = scanProcesses();
+
+    printResults(std::cout, result, kLineMax);
 
     if (writeFull) {
         fullOut << "AV_detect Version: " << VERSION << "\n";
-        (void)isSecuritySoftwareRunning(fullOut, kNoLimit); // file full (no truncation)
+        printResults(fullOut, result, kNoLimit);
     }
 
-    std::cout << (any
+    std::cout << (result.anySecurity
                   ? "\nFound known processes or security software processes (AV, anti-malware, EDR, XDR, etc.) running.\n"
                   : "\nNo security software processes (AV, anti-malware, EDR, XDR, etc.) were found running.\n");
     return 0;

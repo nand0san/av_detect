@@ -1,0 +1,44 @@
+#include <winver.h>
+
+#ifndef VERSION_MAJOR
+#define VERSION_MAJOR 2
+#endif
+#ifndef VERSION_MINOR
+#define VERSION_MINOR 2
+#endif
+#ifndef VERSION_PATCH
+#define VERSION_PATCH 0
+#endif
+
+#define _VS2(a,b,c) #a "." #b "." #c
+#define _VS(a,b,c)  _VS2(a,b,c)
+#define VER_STR _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, 0
+PRODUCTVERSION  VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, 0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      "nand0san"
+            VALUE "FileDescription",  "Security software detector for forensic triage"
+            VALUE "FileVersion",      VER_STR
+            VALUE "InternalName",     "av_detect"
+            VALUE "LegalCopyright",   "MIT License"
+            VALUE "OriginalFilename", "av_detect.exe"
+            VALUE "ProductName",      "av_detect"
+            VALUE "ProductVersion",   VER_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 0x04B0
+    END
+END

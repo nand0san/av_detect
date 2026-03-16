@@ -3,22 +3,32 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.2.0`
+- **Version:** `v2.3.0`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
 
 
-## WHAT'S NEW IN V2.2.0
+## WHAT'S NEW IN V2.3.0
 
-- **New `--full <path>` option**
-  - Keeps **stdout compact** (default truncation) but writes a **full, non-truncated** report to a file.
-  - Useful for **copy/paste**, attachments, or offline parsing without losing long `cmd=` / `bin=` fields.
-
-- **Output remains deterministic + parser-friendly**
-  - Leading **unknown** block (non-baseline, non-mainstream processes), best-effort metadata.
-  - Stable separator line `---`.
-  - Detections sorted alphabetically and prefixed with `[TAG]`.
+- **Expanded catalog** (266 entries, +75 over v2.2.0)
+  - Cisco Secure Client, Pulse Secure / Ivanti, Citrix Workspace ICA, Zscaler ZDP
+  - McAfee/Trellix DLP, Endpoint Encryption, Agent components
+  - SentinelOne UI + Helper, TeamViewer client/helpers, IBM Tivoli RC
+  - Microsoft SCCM, Intune, Vintegris ModuloM
+  - Lenovo Dock Manager, ePrivacy Display, Intel GPU Command Center, Synaptics
+  - nxlog log forwarder
+- **Reduced AV false positives** (12/76 -> 3/76 on VirusTotal)
+  - Removed static linking (eliminates DWARF sections and overlay)
+  - Added PE version info resource (VERSIONINFO)
+  - Stripped debug symbols in Release builds
+- **Bug fixes**
+  - Fixed duplicate detection for vpnagent.exe
+  - Fixed buffer bounds validation in command-line extraction
+  - Fixed CMake linker flags applied after target
+  - Single process snapshot for both stdout and `--full` (consistent output)
+  - RAII guards for all HANDLE / SC_HANDLE resources
+- **Version managed from CMakeLists.txt** (single source of truth)
 
 
 
@@ -80,7 +90,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.2.0
+AV_detect Version: v2.3.0
 
 [unknown] Non-system unknown processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -126,9 +136,10 @@ Exit code is always **0**. Output is exclusively on **stdout** (plus optional fi
 ## TAGS
 
 ```
-[AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [TEL], [VIRT],
-[FW], [HIPS], [VULN], [NDR], [AUDIO], [OEM], [DRM], [USB], [TB],
-[NAS], [INT], [OTHER], [APPC], [UEM], [PAM], [TRUST]
+[AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [DLP], [TEL],
+[VIRT], [FW], [HIPS], [VULN], [NDR], [ENC], [AUDIO], [OEM], [DRM],
+[GPU], [USB], [TB], [NAS], [INT], [MON], [RMM], [OTHER], [APPC],
+[UEM], [PAM], [TRUST]
 ```
 
 ## HOW IT WORKS
@@ -213,9 +224,23 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 - VMware Tools, WSL stack
 - Credential managers (KeePass, Bitwarden, 1Password, etc.)
 - Cloud sync (OneDrive, Dropbox, Google Drive, Nextcloud, iCloud)
+- Pulse Secure / Ivanti, Cisco Secure Client (AnyConnect rebrand)
+- Citrix Workspace / ICA Client, Vintegris ModuloM
+- Microsoft SCCM, Intune, ManageEngine UEM
+- IBM Tivoli Remote Control, nxlog
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.3.0
+
+- Catalog expanded to 266 entries (+75): Cisco Secure Client, Pulse Secure, Citrix ICA, Zscaler ZDP, McAfee/Trellix DLP, SCCM, Intune, IBM Tivoli, Vintegris, nxlog, OEM extras
+- PE version info resource added (reduces AV false positives)
+- Removed static linking; stripped DWARF debug sections (VT score: 12/76 -> 3/76)
+- Fixed vpnagent.exe duplicate detection, buffer bounds check, CMake linker order
+- Single process snapshot for stdout + `--full` (consistent output)
+- RAII resource guards (HandleGuard / ScHandleGuard)
+- Version centralized in CMakeLists.txt
 
 ### V2.2.0
 

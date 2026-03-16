@@ -1,8 +1,12 @@
 Process,ProductName,Tag,Type
 appcontrolagent.exe,Trend Micro Application Control Agent,APPC,Application Control
+arelliaacsvc.exe,Thycotic / Arellia Application Control,APPC,Application Control
 dax3api.exe,Dolby DAX API Service,AUDIO,Audio Processing
+elevoccontrolservice.exe,Elevoc Audio Control Service,AUDIO,Audio Processing
 fmservice64.exe,Fortemedia APO Service,AUDIO,Audio Processing
+intelaudioservice.exe,Intel Audio Service,AUDIO,Audio Driver
 rtkauduservice64.exe,Realtek Audio Universal Service,AUDIO,Audio Driver
+senaryaudioapp.svc.exe,Senary Audio Service,AUDIO,Audio Processing
 aswidsagent.exe,Avast IDS Agent,AV,AV / IDS
 avastsvc.exe,Avast AV Service,AV,AV
 avastui.exe,Avast UI,AV,AV UI
@@ -20,8 +24,10 @@ coreserviceshell.exe,Trend Micro Core Service Shell,AV,AV / EDR
 egui.exe,ESET NOD32 / Endpoint GUI,AV,AV UI
 klwtblfs.exe,Kaspersky FS Filter,AV,AV
 macmnsvc.exe,McAfee Agent Common Service,AV,AV / EDR
+macompatsvc.exe,McAfee Agent Compatibility Service,AV,AV / Agent
 masvc.exe,McAfee Agent Service,AV,AV / EDR
 mcshield.exe,McAfee On-Access Scanner,AV,AV
+mctray.exe,McAfee Agent Tray,AV,AV / Agent
 mfemms.exe,McAfee Endpoint Security / Mgmt,AV,AV / EDR
 mpdefendercoreservice.exe,Microsoft Defender Core Service,AV,AV
 msascuil.exe,Windows Defender UI,AV,AV UI
@@ -43,6 +49,7 @@ sophosui.exe,Sophos UI,AV,AV UI
 tmlisten.exe,Trend Micro AV / Apex One Core,AV,AV / EDR
 tmntsrv.exe,Trend Micro OfficeScan / Apex One,AV,AV / EDR
 tmproxy.exe,Trend Micro Traffic Scanner / Proxy,AV,AV / Network
+updaterui.exe,McAfee Agent Updater UI,AV,AV / Agent
 updatesrv.exe,Bitdefender Update Service,AV,AV
 vsserv.exe,Bitdefender Virus Shield,AV,AV
 windefend.exe,Microsoft Defender AV Service,AV,AV
@@ -68,7 +75,15 @@ keepass.exe,KeePass Password Safe 2,CREDS,Credential Manager
 keepassxc.exe,KeePassXC,CREDS,Credential Manager
 dlpagent.exe,Symantec DLP Agent,DLP,DLP
 dlpsensor.exe,McAfee DLP Sensor,DLP,DLP
+dlpuseragent.exe,Microsoft Defender DLP User Agent,DLP,Data Loss Prevention
 edpa.exe,McAfee DLP Agent,DLP,AV / DLP
+fcag.exe,McAfee/Trellix DLP Agent,DLP,DLP
+fcags.exe,McAfee/Trellix DLP Agent Service,DLP,DLP
+fcagswd.exe,McAfee/Trellix DLP Agent Watchdog,DLP,DLP
+fcnm.exe,McAfee/Trellix DLP Network Monitor,DLP,DLP
+fcom.exe,McAfee/Trellix DLP Orchestrator,DLP,DLP
+mpdlpservice.exe,Microsoft Defender DLP Service,DLP,Data Loss Prevention
+sensedlpprocessor.exe,Microsoft Defender DLP Processor,DLP,Data Loss Prevention
 intelcphdcpsvc.exe,Intel Content Protection HDCP Service,DRM,DRM / Content Protection
 intelcphecisvc.exe,Intel Component Helper Service,DRM,DRM / Content Protection
 csfalconcontainer.exe,CrowdStrike Falcon Sensor Container,EDR,EDR / XDR
@@ -80,22 +95,24 @@ cyveraservice.exe,Cortex XDR Service,EDR,EDR / XDR
 cyvragentsvc.exe,Cortex XDR Agent Service,EDR,EDR / XDR
 cyvrfsflt.exe,Cortex XDR FS Filter,EDR,EDR / XDR
 ekrn.exe,ESET Kernel Service,EDR,AV / EDR
-elastic-agent.exe,Elastic Agent,EDR,EDR / Telemetry / UEM
+elastic-agent.exe,Elastic Agent (Fleet),EDR,EDR / Telemetry / UEM
 elastic-endpoint.exe,Elastic Defend / Endpoint,EDR,EDR / Telemetry
 endpoint-security.exe,Elastic Endpoint Security Component,EDR,EDR / Telemetry
 endpointbasecamp.exe,Trend Micro Endpoint Basecamp,EDR,EDR
 firesvc.exe,FireEye Endpoint Agent Service,EDR,EDR / IR
 firetray.exe,FireEye Endpoint Agent Tray,EDR,EDR / IR
 ir_agent.exe,Rapid7 Insight Agent,EDR,EDR / Vuln / IR
-mssense.exe,Microsoft Defender for Endpoint,EDR,EDR
+mssense.exe,Microsoft Defender for Endpoint (MDE/ATP),EDR,EDR
 psanhost.exe,Panda Advanced Protection Host,EDR,AV / EDR
 sentinelagent.exe,SentinelOne Agent,EDR,EDR / XDR
 sentinelctl.exe,SentinelOne Control CLI,EDR,EDR / XDR
+sentinelhelperservice.exe,SentinelOne Helper Service,EDR,EDR / XDR
 sentinelmemoryscanner.exe,SentinelOne Memory Scanner,EDR,EDR / XDR
 sentinelservicehost.exe,SentinelOne Service Host,EDR,EDR / XDR
 sentinelstaticengine.exe,SentinelOne Static Engine,EDR,EDR / XDR
 sentinelstaticenginescanner.exe,SentinelOne Static Engine Scanner,EDR,EDR / XDR
-sophossps.exe,SophosSps,EDR,EDR / Exploit Guard
+sentinelui.exe,SentinelOne UI,EDR,EDR / XDR
+sophossps.exe,SophosSps (Exploit Mitigation / Endpoint Defense),EDR,EDR / Exploit Guard
 tanclient.exe,Tanium EDR Client (legacy),EDR,EDR / IR
 taniumclient.exe,Tanium Client,EDR,EDR / Asset / IR
 traps.exe,Cortex XDR (Traps),EDR,EDR / XDR
@@ -105,53 +122,91 @@ wrsa.exe,Webroot SecureAnywhere,EDR,AV / EDR
 xagt.exe,FireEye Endpoint Agent / Trellix HX,EDR,EDR / IR
 axcrypt.exe,AxCrypt,ENC,Encryption
 eegoservice.exe,McAfee Endpoint Encryption Service,ENC,Disk Encryption
+epepcmonitor.exe,McAfee Endpoint Encryption PC Monitor,ENC,Disk Encryption
 mdecryptservice.exe,McAfee Encryption Decrypt Service,ENC,Disk Encryption
 mfeepehost.exe,McAfee Endpoint Encryption Host,ENC,Disk Encryption
+toast32.exe,McAfee Endpoint Encryption Notification,ENC,Disk Encryption
 truecrypt.exe,TrueCrypt,ENC,Encryption
 fw.exe,Check Point Firewall,FW,Firewall
 mfemactl.exe,McAfee ES Firewall Controller,FW,Firewall
 personalfirewallservice.exe,Trend Micro Personal Firewall,FW,Firewall
 igfxcuiservice.exe,Intel Graphics CUI Service,GPU,GPU Runtime
 igfxem.exe,Intel Graphics EM,GPU,GPU Runtime
+oneapp.igcc.winservice.exe,Intel Graphics Command Center Service,GPU,GPU Runtime
 hips.exe,Host Intrusion Prevention System,HIPS,HIPS
-mfefire.exe,McAfee HIPS / Firewall,HIPS,HIPS / Firewall
-sgrmbroker.exe,System Guard Runtime Monitor Broker,INT,System Integrity
+mfefire.exe,McAfee HIPS / Firewall,HIPS,HIPS / FW
+sgrmbroker.exe,Windows System Guard Runtime Monitor Broker,INT,System Integrity
 healthservice.exe,Microsoft OMS / SCOM HealthService,MON,Monitoring
 monitoringhost.exe,Microsoft Monitoring Agent,MON,Monitoring
 npmdagent.exe,SolarWinds NPM Agent,MON,Network Monitoring
 synrpcserver.exe,Synology Assistant RPC Service,NAS,NAS Discovery
 sensendr.exe,Microsoft Defender NDR component,NDR,Security / NDR
+dockmgr.exe,Lenovo Dock Manager,OEM,OEM Docking
+dockmgr.svc.exe,Lenovo Dock Manager Service,OEM,OEM Docking
+easyresume.exe,Lenovo Instant On / EasyResume,OEM,OEM Power
+epdctrl.exe,Lenovo ePrivacy Display Control,OEM,OEM Privacy Screen
+epdservice.exe,Lenovo ePrivacy Display Service,OEM,OEM Privacy Screen
 esif_uf.exe,Intel Dynamic Platform & Thermal Framework,OEM,OEM Thermal Mgmt
 ibmpmsvc.exe,Lenovo Power Management Service,OEM,OEM Power
+ipf_helper.exe,Intel Platform Framework Helper,OEM,OEM Thermal/Power
+ipf_uf.exe,Intel Platform Framework User-Mode,OEM,OEM Thermal/Power
+ipfsvc.exe,Intel Platform Framework Service,OEM,OEM Thermal/Power
 jhi_service.exe,Intel Dynamic Application Loader (HECI),OEM,OEM Management
+lenovoaiccloader.exe,Lenovo AI Core Components,OEM,OEM Configuration
+lenovovisionservice.exe,Lenovo Vision Service,OEM,OEM Camera/Vision
+litssvc.exe,Lenovo Intelligent Thermal Solution,OEM,OEM Thermal
+lms.exe,Intel AMT Local Management Service,OEM,OEM Management
 powermgr.exe,Lenovo Power Manager,OEM,OEM Power
 shtctky.exe,Lenovo Hotkeys,OEM,OEM Hotkeys
+smartstandby.exe,Lenovo Smart Standby,OEM,OEM Power
+syntpenh.exe,Synaptics TouchPad Enhancements,OEM,OEM Input
+syntpenhservice.exe,Synaptics TouchPad Service,OEM,OEM Input
 tphkload.exe,Lenovo Hotkey Loader,OEM,OEM Hotkeys
 tposd.exe,Lenovo On-Screen Display,OEM,OEM OSD
 cpd.exe,Check Point Daemon,OTHER,Security
 mdnsresponder.exe,Bonjour Service,OTHER,Network Service / mDNS
+nssm.exe,NSSM (Non-Sucking Service Manager),OTHER,Service Wrapper / Persistence Helper
 panda_url_filtering.exe,Panda URL Filtering,OTHER,Web Filter
+rtocustodio.exe,Vintegris ModuloM Security Agent,OTHER,Authentication / Security
+rtosecstartsrv.exe,Vintegris ModuloM Security Service,OTHER,Authentication / Security
 sbiesvc.exe,Sandboxie Service,OTHER,Sandbox / Isolation
 securityhealthservice.exe,Windows Security Health Service,OTHER,Security / Health
 securityhealthsystray.exe,Windows Security Systray,OTHER,Security / Health
 senseir.exe,Microsoft Defender IR component,OTHER,Security / IR
-smsvchost.exe,.NET Framework Service Host,OTHER,Application
+smsvchost.exe,Microsoft .NET Framework service host,OTHER,Application
+arellia.agent.service.exe,Thycotic / Arellia PAM Agent,PAM,PAM / Privileged Access
 msra.exe,Windows Remote Assistance,RDP,Remote Assistance
 msrdc.exe,Microsoft Remote Desktop Client (Modern),RDP,RDP
 mstsc.exe,Microsoft Remote Desktop Client,RDP,RDP
 cmrcservice.exe,ConfigMgr Remote Control Service,RMM,Remote Control
 quickassist.exe,Microsoft Quick Assist,RMM,Remote Assistance
+teamviewer.exe,TeamViewer Client,RMM,Remote Control / RMM
 teamviewer_service.exe,TeamViewer Service,RMM,Remote Control / RMM
+trc_base.exe,IBM Tivoli Remote Control Service,RMM,Remote Control / RMM
+trc_gui.exe,IBM Tivoli Remote Control GUI,RMM,Remote Control / RMM
+tv_w32.exe,TeamViewer Helper (32-bit),RMM,Remote Control / RMM
+tv_x64.exe,TeamViewer Helper (64-bit),RMM,Remote Control / RMM
 tbtp2pshortcutservice.exe,Intel Thunderbolt P2P Shortcut Service,TB,Thunderbolt
 thunderboltservice.exe,Intel Thunderbolt Service,TB,Thunderbolt
+nxlog.exe,nxlog Log Forwarder,TEL,Log Collection / SIEM
 sophoshealth.exe,Sophos Health,TEL,AV / Telemetry
 sysmon.exe,Microsoft Sysmon,TEL,Security Telemetry
 sysmon64.exe,Microsoft Sysmon (64-bit),TEL,Security Telemetry
 telemetryagentservice.exe,Trend Micro Telemetry Agent,TEL,Telemetry
 telemetryservice.exe,Trend Micro Telemetry Service,TEL,Telemetry
-winlogbeat.exe,Elastic Winlogbeat,TEL,Security Telemetry
+winlogbeat.exe,Elastic Winlogbeat (log forwarder),TEL,Security Telemetry
 aesm_service.exe,Intel SGX AESM Service,TRUST,Trusted Execution (SGX)
-ipoverusbsvc.exe,Microsoft IP over USB,USB,USB Networking
+ccmexec.exe,Microsoft SCCM Client,UEM,UEM / Endpoint Management
+dcagentservice.exe,ManageEngine Endpoint Central Agent,UEM,UEM / Inventory / Monitoring
+dcinventory.exe,ManageEngine Inventory Component,UEM,UEM / Inventory
+dcondemand.exe,ManageEngine On-Demand Agent,UEM,UEM / On-Demand
+dcprocessmonitor.exe,ManageEngine Process Monitor,UEM,UEM / Process Monitoring
+dcprocmon.exe,ManageEngine Process Monitor (alt),UEM,UEM / Process Monitoring
+dcswmeter.exe,ManageEngine Software Metering,UEM,UEM / Software Metering
+microsoft.management.services.intunewindowsagent.exe,Microsoft Intune Management Agent,UEM,UEM / Endpoint Management
+scnotification.exe,Microsoft SCCM Notification,UEM,UEM / Endpoint Management
+uesagentservice.exe,ManageEngine Unified Endpoint Security Agent,UEM,UEM / Security
+ipoverusbsvc.exe,Microsoft IP over USB,USB,USB networking
 ss_conn_service.exe,Samsung USB Driver Service,USB,USB / Android
 ss_conn_service2.exe,Samsung USB Driver Service (alt),USB,USB / Android
 vgauthservice.exe,VMware VGAuthService,VIRT,Virtualization / Guest Tools
@@ -166,25 +221,47 @@ wsl.exe,Windows Subsystem for Linux,VIRT,Virtualization / Subsystem
 wslhost.exe,Windows Subsystem for Linux Host,VIRT,Virtualization / Subsystem
 wslservice.exe,Windows Subsystem for Linux Service,VIRT,Virtualization / Subsystem
 concentr.exe,Palo Alto Networks GlobalProtect,VPN,VPN
+csc_ui.exe,Cisco Secure Client UI,VPN,VPN / ZTNA
 fortitray.exe,Fortinet FortiClient / FortiTray,VPN,VPN / Endpoint Security
 fortivpn.exe,Fortinet FortiClient VPN,VPN,VPN
 ksde.exe,Kaspersky Secure Connection,VPN,VPN
 ksdeui.exe,Kaspersky Secure Connection,VPN,VPN
+openvpn-gui.exe,OpenVPN GUI,VPN,VPN
 openvpnserv.exe,OpenVPN,VPN,VPN
 openvpnserv2.exe,OpenVPN (Service v2),VPN,VPN
 pangps.exe,Palo Alto Networks GlobalProtect,VPN,VPN
-vpnagent.exe,Cisco AnyConnect Secure Mobility Client,VPN,VPN
+pulse.exe,Pulse Secure VPN Client,VPN,VPN
+pulsesecureservice.exe,Pulse Secure Service,VPN,VPN
+vpnagent.exe,Cisco AnyConnect / Secure Client,VPN,VPN
 vpnui.exe,Cisco AnyConnect,VPN,VPN
 wireguard.exe,WireGuard,VPN,VPN
 qualysagent.exe,Qualys Cloud Agent,VULN,Vuln Mgmt / Compliance
 qualysagentui.exe,Qualys Cloud Agent UI,VULN,Vuln Mgmt / Compliance
 sensetvm.exe,Microsoft Defender TVM,VULN,Vulnerability Mgmt
 vulnerabilityprotectionagent.exe,Trend Micro Vulnerability Protection Agent,VULN,Vuln Mgmt
+analyticssrv.exe,Citrix Analytics Service,ZTNA,VDI / ZTNA
 aoservice.exe,Citrix Secure Access Client Service,ZTNA,ZTNA / VPN
 appprotection.exe,Citrix App Protection,ZTNA,ZTNA / Anti-hooking
+authmansvr.exe,Citrix Authentication Manager,ZTNA,VDI / ZTNA
+csc_iseagent.exe,Cisco Secure Client ISE Agent,ZTNA,ZTNA / NAC
+csc_iseposture.exe,Cisco Secure Client ISE Posture,ZTNA,ZTNA / NAC
 ctxsdps.exe,Citrix Endpoint Analysis / Secure Access,ZTNA,ZTNA / VPN
 nsload.exe,Citrix Secure Access Client Loader,ZTNA,ZTNA / VPN
 nsverctl.exe,Citrix Secure Access Verification Control,ZTNA,ZTNA / VPN
-updaterservice.exe,Citrix Workspace Updater,ZTNA,ZTNA / Workspace
-zsatray.exe,Zscaler Client Connector,ZTNA,Proxy / CASB / ZTNA
+receiver.exe,Citrix Workspace Receiver,ZTNA,VDI / ZTNA
+redirector.exe,Citrix Redirector,ZTNA,VDI / ZTNA
+selfservice.exe,Citrix Workspace Self-Service,ZTNA,VDI / ZTNA
+selfserviceplugin.exe,Citrix Workspace Self-Service Plugin,ZTNA,VDI / ZTNA
+ssonsvr.exe,Citrix Single Sign-On,ZTNA,VDI / ZTNA
+stagentae.exe,Netskope Agent Engine,ZTNA,ZTNA / CASB / DLP
+stagentsvc.exe,Netskope Client Service,ZTNA,ZTNA / CASB / DLP
+stagentui.exe,Netskope Client UI,ZTNA,ZTNA / CASB / DLP
+updaterservice.exe,Citrix Workspace Updater (CWAUpdaterService),ZTNA,ZTNA / Workspace
+wfcrun32.exe,Citrix ICA Client Runtime,ZTNA,VDI / ZTNA
+zdpapp.exe,Zscaler Digital Experience App,ZTNA,ZTNA / DX Monitoring
+zdpclassifier.exe,Zscaler Digital Experience Classifier,ZTNA,ZTNA / DX Monitoring
+zdpservice.exe,Zscaler Digital Experience Service,ZTNA,ZTNA / DX Monitoring
+zsaservice.exe,Zscaler Service Agent,ZTNA,ZTNA / SWG
+zsatray.exe,Zscaler Client Connector (ZTNA / SWG),ZTNA,Proxy / CASB / ZTNA
 zsatraymanager.exe,Zscaler Client Connector (privileged),ZTNA,Proxy / CASB / ZTNA
+zsatunnel.exe,Zscaler Tunnel Agent,ZTNA,ZTNA / SWG
