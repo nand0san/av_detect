@@ -13,12 +13,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           clean: true
+          fetch-depth: 1
+
+      - name: Diagnostic
+        shell: bash
+        run: |
+          echo "SHA: $(git rev-parse HEAD)"
+          echo "--- main.cpp lines 28-52 ---"
+          sed -n '28,52p' main.cpp
+          echo "--- CMakeLists.txt ---"
+          cat CMakeLists.txt
 
       - name: Configure CMake (MSVC Release)
         run: cmake -S . -B build
 
       - name: Build
-        run: cmake --build build --config Release --clean-first
+        run: cmake --build build --config Release
 
       - name: Find and verify binary
         shell: cmd
