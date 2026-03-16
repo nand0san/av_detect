@@ -1,8 +1,11 @@
 #include <winver.h>
 
-// Embed application manifest
+// Manifest embedding: MSVC handles it automatically via linker.
+// For MinGW, embed via RC only when EMBED_MANIFEST_RC is defined.
+#ifdef EMBED_MANIFEST_RC
 #define RT_MANIFEST 24
 1 RT_MANIFEST "av_detect.manifest"
+#endif
 
 #ifndef VERSION_MAJOR
 #define VERSION_MAJOR 2

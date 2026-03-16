@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
-#define NOMINMAX          // prevent Windows.h from defining min/max macros
 #include <Windows.h>
 #include <tlhelp32.h>
 #include <winsvc.h>
