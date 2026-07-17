@@ -671,6 +671,15 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"endpoint-security.exe",{ {"Elastic Endpoint Security Component","EDR / Telemetry","EDR"} }},
             {"elastic-agent.exe",    { {"Elastic Agent (Fleet)","EDR / Telemetry / UEM","EDR"} }},
 
+            // Acronis Cyber Protect (EDR/XDR)
+            {"cyber-protect-service.exe", { {"Acronis Cyber Protection Service","EDR / XDR","EDR"} }},
+            {"aakore.exe",       { {"Acronis Cyber Protect (Advanced Anti-Malware / EDR Agent)","EDR / XDR","EDR"} }},
+            {"anti_ransomware_service.exe",{ {"Acronis Active Protection (Anti-Ransomware)","EDR / Anti-Ransomware","EDR"} }},
+            {"mms.exe",          { {"Acronis Managed Machine Service","EDR / XDR","EDR"} }},
+            {"mmsmonitor.exe",   { {"Acronis Managed Machine Service Monitor","EDR / XDR","EDR"} }},
+            {"schedul2.exe",     { {"Acronis Scheduler2 Service","EDR / XDR","EDR"} }},
+            {"tib_mounter_service.exe",{ {"Acronis TIB Mounter Service (Backup Image Mount)","EDR / XDR","EDR"} }},
+
             // Tanium / Rapid7 / Qualys
             {"taniumclient.exe", { {"Tanium Client","EDR / Asset / IR","EDR"} }},
             {"tanclient.exe",    { {"Tanium EDR Client (legacy)","EDR / IR","EDR"} }},

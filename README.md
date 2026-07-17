@@ -217,7 +217,7 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 ## VENDOR COVERAGE (SUBSET)
 
 - Microsoft Defender, MDE, Sysmon
-- CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent
+- CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent, Acronis Cyber Protect
 - Trend Micro, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot
 - Zscaler, Fortinet, GlobalProtect, AnyConnect, OpenVPN, WireGuard
 - Tanium, Rapid7 Insight Agent, Qualys Cloud Agent

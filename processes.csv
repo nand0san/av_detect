@@ -86,9 +86,12 @@ mpdlpservice.exe,Microsoft Defender DLP Service,DLP,Data Loss Prevention
 sensedlpprocessor.exe,Microsoft Defender DLP Processor,DLP,Data Loss Prevention
 intelcphdcpsvc.exe,Intel Content Protection HDCP Service,DRM,DRM / Content Protection
 intelcphecisvc.exe,Intel Component Helper Service,DRM,DRM / Content Protection
+aakore.exe,Acronis Cyber Protect (Advanced Anti-Malware / EDR Agent),EDR,EDR / XDR
+anti_ransomware_service.exe,Acronis Active Protection (Anti-Ransomware),EDR,EDR / Anti-Ransomware
 csfalconcontainer.exe,CrowdStrike Falcon Sensor Container,EDR,EDR / XDR
 csfalcondaterepair.exe,CrowdStrike Falcon Repair Component,EDR,EDR / XDR
 csfalconservice.exe,CrowdStrike Falcon Sensor,EDR,EDR / XDR
+cyber-protect-service.exe,Acronis Cyber Protection Service,EDR,EDR / XDR
 cyserver.exe,Cortex XDR Agent (protected),EDR,EDR / XDR
 cyveraconsole.exe,Cortex XDR Console,EDR,EDR / XDR
 cyveraservice.exe,Cortex XDR Service,EDR,EDR / XDR
@@ -102,8 +105,11 @@ endpointbasecamp.exe,Trend Micro Endpoint Basecamp,EDR,EDR
 firesvc.exe,FireEye Endpoint Agent Service,EDR,EDR / IR
 firetray.exe,FireEye Endpoint Agent Tray,EDR,EDR / IR
 ir_agent.exe,Rapid7 Insight Agent,EDR,EDR / Vuln / IR
+mms.exe,Acronis Managed Machine Service,EDR,EDR / XDR
+mmsmonitor.exe,Acronis Managed Machine Service Monitor,EDR,EDR / XDR
 mssense.exe,Microsoft Defender for Endpoint (MDE/ATP),EDR,EDR
 psanhost.exe,Panda Advanced Protection Host,EDR,AV / EDR
+schedul2.exe,Acronis Scheduler2 Service,EDR,EDR / XDR
 sentinelagent.exe,SentinelOne Agent,EDR,EDR / XDR
 sentinelctl.exe,SentinelOne Control CLI,EDR,EDR / XDR
 sentinelhelperservice.exe,SentinelOne Helper Service,EDR,EDR / XDR
@@ -115,6 +121,7 @@ sentinelui.exe,SentinelOne UI,EDR,EDR / XDR
 sophossps.exe,SophosSps (Exploit Mitigation / Endpoint Defense),EDR,EDR / Exploit Guard
 tanclient.exe,Tanium EDR Client (legacy),EDR,EDR / IR
 taniumclient.exe,Tanium Client,EDR,EDR / Asset / IR
+tib_mounter_service.exe,Acronis TIB Mounter Service (Backup Image Mount),EDR,EDR / XDR
 traps.exe,Cortex XDR (Traps),EDR,EDR / XDR
 trapsagent.exe,Cortex XDR (Traps Agent),EDR,EDR / XDR
 trapsd.exe,Cortex XDR Daemon,EDR,EDR / XDR
