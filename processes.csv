@@ -54,6 +54,10 @@ updatesrv.exe,Bitdefender Update Service,AV,AV
 vsserv.exe,Bitdefender Virus Shield,AV,AV
 windefend.exe,Microsoft Defender AV Service,AV,AV
 wscservice.exe,Trend Micro Security Service,AV,AV / EDR
+mms.exe,Acronis Managed Machine Service,BACKUP,Backup Agent Core
+mmsmonitor.exe,Acronis Managed Machine Service Monitor,BACKUP,Backup Agent Watchdog
+schedul2.exe,Acronis Scheduler2 Service,BACKUP,Backup Scheduler
+tib_mounter_service.exe,Acronis TIB Mounter Service,BACKUP,Backup Image Mount
 applephotostreams.exe,Apple Photo Streams,CLOUD,Cloud Sync / iCloud
 apsdaemon.exe,Apple iCloud Push Daemon,CLOUD,Cloud Sync / iCloud
 box.exe,Box Desktop,CLOUD,Cloud Sync / Box
@@ -86,9 +90,12 @@ mpdlpservice.exe,Microsoft Defender DLP Service,DLP,Data Loss Prevention
 sensedlpprocessor.exe,Microsoft Defender DLP Processor,DLP,Data Loss Prevention
 intelcphdcpsvc.exe,Intel Content Protection HDCP Service,DRM,DRM / Content Protection
 intelcphecisvc.exe,Intel Component Helper Service,DRM,DRM / Content Protection
+aakore.exe,Acronis Agent Core,EDR,EDR / XDR
+anti_ransomware_service.exe,Acronis Active Protection,EDR,Anti-Ransomware / Behavior
 csfalconcontainer.exe,CrowdStrike Falcon Sensor Container,EDR,EDR / XDR
 csfalcondaterepair.exe,CrowdStrike Falcon Repair Component,EDR,EDR / XDR
 csfalconservice.exe,CrowdStrike Falcon Sensor,EDR,EDR / XDR
+cyber-protect-service.exe,Acronis Cyber Protect Service,EDR,EDR / XDR
 cyserver.exe,Cortex XDR Agent (protected),EDR,EDR / XDR
 cyveraconsole.exe,Cortex XDR Console,EDR,EDR / XDR
 cyveraservice.exe,Cortex XDR Service,EDR,EDR / XDR

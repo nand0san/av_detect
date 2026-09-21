@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.3.0
+// av_detect.cpp -- v2.4.0
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.3.0"
+#define VERSION "v2.4.0"
 #endif
 #endif
 
@@ -670,6 +670,20 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"elastic-endpoint.exe", { {"Elastic Defend / Endpoint","EDR / Telemetry","EDR"} }},
             {"endpoint-security.exe",{ {"Elastic Endpoint Security Component","EDR / Telemetry","EDR"} }},
             {"elastic-agent.exe",    { {"Elastic Agent (Fleet)","EDR / Telemetry / UEM","EDR"} }},
+
+            // Acronis Cyber Protect -- security modules.
+            // Only present when the protection component is installed.
+            {"cyber-protect-service.exe",{ {"Acronis Cyber Protect Service","EDR / XDR","EDR"} }},
+            {"aakore.exe",       { {"Acronis Agent Core","EDR / XDR","EDR"} }},
+            {"anti_ransomware_service.exe",{ {"Acronis Active Protection","Anti-Ransomware / Behavior","EDR"} }},
+
+            // Acronis -- backup engine. Shipped with Cyber Protect but also with
+            // backup-only products (True Image, Cyber Backup), so these alone do
+            // NOT imply an EDR is present. Tagged BACKUP to avoid inflating EDR hits.
+            {"mms.exe",          { {"Acronis Managed Machine Service","Backup Agent Core","BACKUP"} }},
+            {"mmsmonitor.exe",   { {"Acronis Managed Machine Service Monitor","Backup Agent Watchdog","BACKUP"} }},
+            {"schedul2.exe",     { {"Acronis Scheduler2 Service","Backup Scheduler","BACKUP"} }},
+            {"tib_mounter_service.exe",{ {"Acronis TIB Mounter Service","Backup Image Mount","BACKUP"} }},
 
             // Tanium / Rapid7 / Qualys
             {"taniumclient.exe", { {"Tanium Client","EDR / Asset / IR","EDR"} }},

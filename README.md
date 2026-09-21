@@ -3,9 +3,22 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.3.0`
+- **Version:** `v2.4.0`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
+
+
+
+## WHAT'S NEW IN V2.4.0
+
+- **Acronis Cyber Protect coverage** (273 entries, +7 over v2.3.0)
+  - Security modules tagged `EDR`: Cyber Protect Service, Agent Core, Active Protection
+  - Backup engine tagged `BACKUP`: Managed Machine Service (+ monitor), Scheduler2, TIB Mounter
+- **New `BACKUP` tag**
+  - Backup agents are reported separately from `EDR` because they also ship in
+    backup-only products (Acronis True Image, Cyber Backup). Seeing them does
+    **not** imply an EDR is deployed, and tagging them `EDR` would overstate
+    endpoint protection during triage and recon.
 
 
 
@@ -90,7 +103,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.3.0
+AV_detect Version: v2.4.0
 
 [unknown] Non-system unknown processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -139,7 +152,7 @@ Exit code is always **0**. Output is exclusively on **stdout** (plus optional fi
 [AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [DLP], [TEL],
 [VIRT], [FW], [HIPS], [VULN], [NDR], [ENC], [AUDIO], [OEM], [DRM],
 [GPU], [USB], [TB], [NAS], [INT], [MON], [RMM], [OTHER], [APPC],
-[UEM], [PAM], [TRUST]
+[UEM], [PAM], [TRUST], [BACKUP]
 ```
 
 ## HOW IT WORKS
@@ -218,6 +231,7 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 
 - Microsoft Defender, MDE, Sysmon
 - CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent
+- Acronis Cyber Protect (security modules + backup engine)
 - Trend Micro, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot
 - Zscaler, Fortinet, GlobalProtect, AnyConnect, OpenVPN, WireGuard
 - Tanium, Rapid7 Insight Agent, Qualys Cloud Agent
@@ -231,6 +245,12 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.4.0
+
+- Catalog expanded to 273 entries (+7): Acronis Cyber Protect
+- New `BACKUP` tag: Acronis backup engine (`mms.exe`, `mmsmonitor.exe`, `schedul2.exe`, `tib_mounter_service.exe`) is reported apart from `EDR`, since those services also run in backup-only installs
+- Acronis security modules (`cyber-protect-service.exe`, `aakore.exe`, `anti_ransomware_service.exe`) tagged `EDR`
 
 ### V2.3.0
 
