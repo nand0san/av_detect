@@ -3,7 +3,7 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.4.0`
+- **Version:** `v2.4.1`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
@@ -103,9 +103,9 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.4.0
+AV_detect Version: v2.4.1
 
-[unknown] Non-system unknown processes (N):
+[unknown] Unknown or noteworthy processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
 - othersvc.exe | svc=ServiceName(+2) | bin=C:\Program Files\Vendor\svc.exe -k group
 - another.exe | img=C:\Windows\System32\another.exe
@@ -245,6 +245,11 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.4.1
+
+- Unknown block header reworded to `Unknown or noteworthy processes`: the section also lists processes that are known but deliberately kept out of the baselines (shells, remote access), so "unknown" understated it
+- Output format unchanged: the `[unknown]` token is preserved, so existing parsers keep working
 
 ### V2.4.0
 

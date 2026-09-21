@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.4.0
+// av_detect.cpp -- v2.4.1
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.4.0"
+#define VERSION "v2.4.1"
 #endif
 #endif
 
@@ -1069,7 +1069,7 @@ static ScanResult scanProcesses() {
 // -------------------- output --------------------
 
 static void printResults(std::ostream& os, const ScanResult& result, size_t maxLen) {
-    os << "\n[unknown] Non-system unknown processes (" << result.unknowns.size() << "):" << std::endl;
+    os << "\n[unknown] Unknown or noteworthy processes (" << result.unknowns.size() << "):" << std::endl;
     for (const auto& u : result.unknowns) {
         os << buildUnknownLine(u, maxLen) << std::endl;
     }
