@@ -185,6 +185,19 @@ Baselines are **noise suppression only** (not allow-lists).
 | `nextcloud.exe` | `Nextcloud Desktop`       | `CLOUD` | `Cloud Sync / Nextcloud` |
 | `keepass.exe`   | `KeePass Password Safe 2` | `CREDS` | `Credential Manager`     |
 
+### CSV SCHEMA (BASELINES.CSV)
+
+Companion list of the processes the tool keeps out of the `[unknown]` block
+(core Windows + mainstream apps + pseudo-process names). Used by the
+noteworthy one-liner below to reproduce the tool's subtraction. Generated
+from the same `main.cpp` baselines, so both stay in sync.
+
+| Process (exe)  | Kind     |
+| -------------- | -------- |
+| `svchost.exe`  | `system` |
+| `chrome.exe`   | `app`    |
+| `registry`     | `pseudo` |
+
 ## POWERSHELL DETECTION (ONLINE)
 
 These one-liners use the canonical CSV:
@@ -227,6 +240,22 @@ $procs=Get-Process;Import-Csv .\processes.csv -Header Process,ProductName,Tag,Ty
 
 The forced header ensures stable parsing even if the CSV was exported without a header row.
 
+## POWERSHELL - UNKNOWN / NOTEWORTHY PROCESSES
+
+The one-liners above list **known** security tools (catalog matches). This one
+lists the other half the exe reports: processes that are **neither** in the
+catalog **nor** in the baselines (`baselines.csv`) - the unknown-or-noteworthy
+set, including shells and remote-access tools kept visible on purpose. It pulls
+both CSVs, builds the exclusion set, and shows each surviving `.exe` with its
+command line (falls back to the image path when the command line is protected).
+
+```powershell
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;$b='https://raw.githubusercontent.com/nand0san/av_detect/main';$k=@{};(((Invoke-WebRequest "$b/processes.csv" -UseBasicParsing).Content|ConvertFrom-Csv)+((Invoke-WebRequest "$b/baselines.csv" -UseBasicParsing).Content|ConvertFrom-Csv))|ForEach-Object{$k[($_.Process -replace '\.exe$','').ToLower()]=1};Get-CimInstance Win32_Process|Where-Object{$_.Name -match '\.exe$' -and -not $k[($_.Name -replace '\.exe$','').ToLower()]}|Select-Object @{n='Process';e={$_.Name}},@{n='Detail';e={if($_.CommandLine){$_.CommandLine}else{$_.ExecutablePath}}}|Sort-Object Process -Unique|Format-Table -Wrap
+```
+
+This mirrors the exe's `[unknown]` block. Minor differences are only transient
+processes that start or stop between runs (including the shell running the query).
+
 ## VENDOR COVERAGE (SUBSET)
 
 - Microsoft Defender, MDE, Sysmon
@@ -251,6 +280,7 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 - Build fix: the release binary is now statically linked, so it no longer depends on `libc++.dll` / `libunwind.dll` from the llvm-mingw toolchain. v2.3.0 through v2.4.1 only ran on hosts where the toolchain was on PATH; a clean machine failed with missing-DLL errors.
 - Symbols are still stripped (`-s`), so the static link does not bring back the debug sections. Binary grows to ~900 KB but imports only system DLLs.
 - No catalog or behavior change.
+- Added `baselines.csv` (noise-suppression lists) and a PowerShell one-liner that reproduces the exe's `[unknown]` / noteworthy block without the binary. Data + docs only; same exe.
 
 ### V2.4.1
 
