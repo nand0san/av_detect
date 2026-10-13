@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.4.1
+// av_detect.cpp -- v2.4.2
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.4.1"
+#define VERSION "v2.4.2"
 #endif
 #endif
 

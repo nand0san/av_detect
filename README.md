@@ -3,7 +3,7 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.4.1`
+- **Version:** `v2.4.2`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
@@ -103,7 +103,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.4.1
+AV_detect Version: v2.4.2
 
 [unknown] Unknown or noteworthy processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -245,6 +245,12 @@ The forced header ensures stable parsing even if the CSV was exported without a 
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.4.2
+
+- Build fix: the release binary is now statically linked, so it no longer depends on `libc++.dll` / `libunwind.dll` from the llvm-mingw toolchain. v2.3.0 through v2.4.1 only ran on hosts where the toolchain was on PATH; a clean machine failed with missing-DLL errors.
+- Symbols are still stripped (`-s`), so the static link does not bring back the debug sections. Binary grows to ~900 KB but imports only system DLLs.
+- No catalog or behavior change.
 
 ### V2.4.1
 
