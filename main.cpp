@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.6.0
+// av_detect.cpp -- v2.7.0
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.6.0"
+#define VERSION "v2.7.0"
 #endif
 #endif
 
@@ -962,6 +962,13 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             // Vintegris ModuloM (authentication / security)
             {"rtocustodio.exe",  { {"Vintegris ModuloM Security Agent","Authentication / Security","OTHER"} }},
             {"rtosecstartsrv.exe",{ {"Vintegris ModuloM Security Service","Authentication / Security","OTHER"} }},
+
+            // AI assistants / local LLM clients (shadow-AI, data governance).
+            // Only specific image names with no collision against non-AI software.
+            {"claude.exe",       { {"Anthropic Claude (Desktop / Claude Code)","AI Assistant / LLM","AI"} }},
+            {"chatgpt.exe",      { {"OpenAI ChatGPT Desktop","AI Assistant / LLM","AI"} }},
+            {"ollama.exe",       { {"Ollama Local LLM Runtime","Local LLM Runtime","AI"} }},
+            {"m365copilot.exe",  { {"Microsoft 365 Copilot","AI Assistant / M365","AI"} }},
 
     };
     return sw;

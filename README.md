@@ -3,23 +3,25 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.6.0`
+- **Version:** `v2.7.0`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
 
 
-## WHAT'S NEW IN V2.6.0
+## WHAT'S NEW IN V2.7.0
 
-- **More coverage from real hardened-endpoint data** (283 entries, +6 over v2.5.0)
-  - FortiClient components that were previously missed: SSL VPN daemon
-    (`fortisslvpndaemon.exe`), Settings Service (`fortisettings.exe`), Logging
-    Daemon (`fcdblog.exe`), all tagged `VPN` (names from Fortinet docs)
-  - Microsoft Defender session helper (`defendersessionhelper.exe`), tagged `AV`
-  - Lenovo ITS power-mode helper (`itspowermode.exe`) and DisplayLink dock
-    software (`displaylinktrayapp.exe`), tagged `OEM`
-- **Baseline:** `useroobebroker.exe` (Windows OOBE broker) added to the system
-  baseline so it no longer shows up as noteworthy noise.
+- **New `AI` tag: desktop AI assistants and local LLM clients** (287 entries, +4)
+  - `claude.exe` (Anthropic Claude Desktop / Claude Code)
+  - `chatgpt.exe` (OpenAI ChatGPT Desktop)
+  - `ollama.exe` (Ollama local LLM runtime)
+  - `m365copilot.exe` (Microsoft 365 Copilot)
+- **Why:** shadow-AI and data-governance triage. Knowing an LLM client is running
+  on an endpoint matters for data-exfiltration and policy reviews, the same way
+  cloud-sync clients already do.
+- Only specific image names with no collision against non-AI software were
+  included. Ambiguous ones (`copilot.exe`, `cursor.exe`, names with spaces like
+  `LM Studio.exe`) were deliberately left out.
 
 
 
@@ -104,7 +106,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.6.0
+AV_detect Version: v2.7.0
 
 [unknown] Unknown or noteworthy processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -112,6 +114,7 @@ AV_detect Version: v2.6.0
 - another.exe | img=C:\Windows\System32\another.exe
 
 
+[AI] OpenAI ChatGPT Desktop - chatgpt.exe
 [AV] Kaspersky UI - avpui.exe
 [CLOUD] Nextcloud Desktop - nextcloud.exe
 [EDR] CrowdStrike Falcon Sensor - csfalconservice.exe
@@ -153,7 +156,7 @@ Exit code is always **0**. Output is exclusively on **stdout** (plus optional fi
 [AV], [EDR], [VPN], [ZTNA], [RDP], [CLOUD], [CREDS], [DLP], [TEL],
 [VIRT], [FW], [HIPS], [VULN], [NDR], [ENC], [AUDIO], [OEM], [DRM],
 [GPU], [USB], [TB], [NAS], [INT], [MON], [RMM], [OTHER], [APPC],
-[UEM], [PAM], [TRUST], [BACKUP]
+[UEM], [PAM], [TRUST], [BACKUP], [AI]
 ```
 
 ## HOW IT WORKS
@@ -263,6 +266,7 @@ processes that start or stop between runs (including the shell running the query
 - CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent
 - Acronis Cyber Protect (security modules + backup engine)
 - Commvault, Veeam Agent (backup agents, tagged `BACKUP`)
+- AI assistants / local LLM clients: Claude, ChatGPT, Ollama, Microsoft 365 Copilot (tagged `AI`)
 - Trend Micro, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot
 - Zscaler, Fortinet, GlobalProtect, AnyConnect, OpenVPN, WireGuard
 - Tanium, Rapid7 Insight Agent, Qualys Cloud Agent
@@ -276,6 +280,13 @@ processes that start or stop between runs (including the shell running the query
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.7.0
+
+- New `AI` tag for desktop AI assistants / local LLM clients (shadow-AI, data governance)
+- Catalog expanded to 287 entries (+4): `claude.exe`, `chatgpt.exe`, `ollama.exe`, `m365copilot.exe`
+- Only specific, collision-free image names included; ambiguous or space-containing names left out
+- No behavior or output-format change (the `AI` token follows the same `[TAG]` scheme)
 
 ### V2.6.0
 

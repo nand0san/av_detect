@@ -1,4 +1,8 @@
 Process,ProductName,Tag,Type
+chatgpt.exe,OpenAI ChatGPT Desktop,AI,AI Assistant / LLM
+claude.exe,Anthropic Claude (Desktop / Claude Code),AI,AI Assistant / LLM
+m365copilot.exe,Microsoft 365 Copilot,AI,AI Assistant / M365
+ollama.exe,Ollama Local LLM Runtime,AI,Local LLM Runtime
 appcontrolagent.exe,Trend Micro Application Control Agent,APPC,Application Control
 arelliaacsvc.exe,Thycotic / Arellia Application Control,APPC,Application Control
 dax3api.exe,Dolby DAX API Service,AUDIO,Audio Processing
