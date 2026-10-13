@@ -3,22 +3,23 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.5.0`
+- **Version:** `v2.6.0`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
 
 
-## WHAT'S NEW IN V2.5.0
+## WHAT'S NEW IN V2.6.0
 
-- **Backup agent coverage beyond Acronis** (277 entries, +4 over v2.4.2)
-  - Commvault: Client Manager Service (`clmgrs.exe`), Firewall Tunnel (`cvfwd.exe`), MediaAgent Mount (`cvmountd.exe`)
-  - Veeam: Agent for Windows Service (`veeam.endpoint.service.exe`)
-  - All tagged `BACKUP`; names taken from vendor service documentation
-- **The `BACKUP` tag** keeps backup engines separate from `EDR`: these services
-  also ship in backup-only products, so seeing them does **not** imply an EDR is
-  deployed, and tagging them `EDR` would overstate endpoint protection during
-  triage and recon.
+- **More coverage from real hardened-endpoint data** (283 entries, +6 over v2.5.0)
+  - FortiClient components that were previously missed: SSL VPN daemon
+    (`fortisslvpndaemon.exe`), Settings Service (`fortisettings.exe`), Logging
+    Daemon (`fcdblog.exe`), all tagged `VPN` (names from Fortinet docs)
+  - Microsoft Defender session helper (`defendersessionhelper.exe`), tagged `AV`
+  - Lenovo ITS power-mode helper (`itspowermode.exe`) and DisplayLink dock
+    software (`displaylinktrayapp.exe`), tagged `OEM`
+- **Baseline:** `useroobebroker.exe` (Windows OOBE broker) added to the system
+  baseline so it no longer shows up as noteworthy noise.
 
 
 
@@ -103,7 +104,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.5.0
+AV_detect Version: v2.6.0
 
 [unknown] Unknown or noteworthy processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -275,6 +276,15 @@ processes that start or stop between runs (including the shell running the query
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.6.0
+
+- Catalog expanded to 283 entries (+6), from observed processes on a hardened corporate endpoint
+- FortiClient: `fortisslvpndaemon.exe`, `fortisettings.exe`, `fcdblog.exe` (tag `VPN`, names from Fortinet documentation)
+- Microsoft Defender: `defendersessionhelper.exe` (tag `AV`, confirmed by its signed Defender Platform path)
+- OEM: `itspowermode.exe` (Lenovo Intelligent Thermal Solution) and `displaylinktrayapp.exe` (DisplayLink dock software), tag `OEM`
+- Baseline: `useroobebroker.exe` added to the system baseline (noise suppression)
+- No behavior or output-format change
 
 ### V2.5.0
 

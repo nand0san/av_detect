@@ -87,6 +87,7 @@ taskhostw.exe,system
 taskmgr.exe,system
 textinputhost.exe,system
 unsecapp.exe,system
+useroobebroker.exe,system
 vmcompute.exe,system
 vmmemwsl,system
 vmms.exe,system

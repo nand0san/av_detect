@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.5.0
+// av_detect.cpp -- v2.6.0
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.5.0"
+#define VERSION "v2.6.0"
 #endif
 #endif
 
@@ -266,7 +266,8 @@ static const std::unordered_set<std::string>& baselineSystem() {
             // other native components
             "locationnotificationwindows.exe",
             "mmgaserver.exe",
-            "modemauthenticator.exe"
+            "modemauthenticator.exe",
+            "useroobebroker.exe"
     };
     return base;
 }
@@ -580,6 +581,9 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"pangps.exe",   { {"Palo Alto Networks GlobalProtect","VPN","VPN"} }},
             {"fortitray.exe",{ {"Fortinet FortiClient / FortiTray","VPN / Endpoint Security","VPN"} }},
             {"fortivpn.exe", { {"Fortinet FortiClient VPN","VPN","VPN"} }},
+            {"fortisslvpndaemon.exe",{ {"Fortinet FortiClient SSL VPN daemon","VPN","VPN"} }},
+            {"fortisettings.exe",{ {"Fortinet FortiClient Settings Service","VPN / Endpoint Security","VPN"} }},
+            {"fcdblog.exe",  { {"Fortinet FortiClient Logging Daemon","VPN / Logging","VPN"} }},
             {"zsatray.exe",  { {"Zscaler Client Connector (ZTNA / SWG)","Proxy / CASB / ZTNA","ZTNA"} }},
             {"zsatraymanager.exe",{ {"Zscaler Client Connector (privileged)","Proxy / CASB / ZTNA","ZTNA"} }},
             {"ksde.exe",     { {"Kaspersky Secure Connection","VPN","VPN"} }},
@@ -641,6 +645,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"mpdefendercoreservice.exe",{ {"Microsoft Defender Core Service","AV","AV"} }},
             {"windefend.exe",{ {"Microsoft Defender AV Service","AV","AV"} }},
             {"msascuil.exe", { {"Windows Defender UI","AV UI","AV"} }},
+            {"defendersessionhelper.exe",{ {"Microsoft Defender Session Helper","AV","AV"} }},
             {"securityhealthservice.exe",{ {"Windows Security Health Service","Security / Health","OTHER"} }},
             {"securityhealthsystray.exe",{ {"Windows Security Systray","Security / Health","OTHER"} }},
             {"sysmon.exe",   { {"Microsoft Sysmon","Security Telemetry","TEL"} }},
@@ -909,6 +914,7 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"lenovovisionservice.exe",{ {"Lenovo Vision Service","OEM Camera/Vision","OEM"} }},
             {"smartstandby.exe", { {"Lenovo Smart Standby","OEM Power","OEM"} }},
             {"litssvc.exe",      { {"Lenovo Intelligent Thermal Solution","OEM Thermal","OEM"} }},
+            {"itspowermode.exe", { {"Lenovo Intelligent Thermal Solution (Power Mode)","OEM Thermal/Power","OEM"} }},
             {"epdctrl.exe",      { {"Lenovo ePrivacy Display Control","OEM Privacy Screen","OEM"} }},
             {"epdservice.exe",   { {"Lenovo ePrivacy Display Service","OEM Privacy Screen","OEM"} }},
             {"dockmgr.exe",      { {"Lenovo Dock Manager","OEM Docking","OEM"} }},
@@ -921,6 +927,9 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"ipf_uf.exe",       { {"Intel Platform Framework User-Mode","OEM Thermal/Power","OEM"} }},
             {"ipfsvc.exe",       { {"Intel Platform Framework Service","OEM Thermal/Power","OEM"} }},
             {"lms.exe",          { {"Intel AMT Local Management Service","OEM Management","OEM"} }},
+
+            // OEM / peripherals (docks, USB graphics)
+            {"displaylinktrayapp.exe",{ {"DisplayLink Core Software","OEM USB Graphics / Dock","OEM"} }},
 
             // Audio (additional)
             {"elevoccontrolservice.exe",{ {"Elevoc Audio Control Service","Audio Processing","AUDIO"} }},

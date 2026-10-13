@@ -21,6 +21,7 @@ clientcommunicationservice.exe,Trend Micro Client Comm,AV,AV / EDR
 clientlogservice.exe,Trend Micro Client Log,AV,AV / EDR
 clientsolutionframework.exe,Trend Micro Client Solution,AV,AV / EDR
 coreserviceshell.exe,Trend Micro Core Service Shell,AV,AV / EDR
+defendersessionhelper.exe,Microsoft Defender Session Helper,AV,AV
 egui.exe,ESET NOD32 / Endpoint GUI,AV,AV UI
 klwtblfs.exe,Kaspersky FS Filter,AV,AV
 macmnsvc.exe,McAfee Agent Common Service,AV,AV / EDR
@@ -152,6 +153,7 @@ monitoringhost.exe,Microsoft Monitoring Agent,MON,Monitoring
 npmdagent.exe,SolarWinds NPM Agent,MON,Network Monitoring
 synrpcserver.exe,Synology Assistant RPC Service,NAS,NAS Discovery
 sensendr.exe,Microsoft Defender NDR component,NDR,Security / NDR
+displaylinktrayapp.exe,DisplayLink Core Software,OEM,OEM USB Graphics / Dock
 dockmgr.exe,Lenovo Dock Manager,OEM,OEM Docking
 dockmgr.svc.exe,Lenovo Dock Manager Service,OEM,OEM Docking
 easyresume.exe,Lenovo Instant On / EasyResume,OEM,OEM Power
@@ -162,6 +164,7 @@ ibmpmsvc.exe,Lenovo Power Management Service,OEM,OEM Power
 ipf_helper.exe,Intel Platform Framework Helper,OEM,OEM Thermal/Power
 ipf_uf.exe,Intel Platform Framework User-Mode,OEM,OEM Thermal/Power
 ipfsvc.exe,Intel Platform Framework Service,OEM,OEM Thermal/Power
+itspowermode.exe,Lenovo Intelligent Thermal Solution (Power Mode),OEM,OEM Thermal/Power
 jhi_service.exe,Intel Dynamic Application Loader (HECI),OEM,OEM Management
 lenovoaiccloader.exe,Lenovo AI Core Components,OEM,OEM Configuration
 lenovovisionservice.exe,Lenovo Vision Service,OEM,OEM Camera/Vision
@@ -233,6 +236,9 @@ wslhost.exe,Windows Subsystem for Linux Host,VIRT,Virtualization / Subsystem
 wslservice.exe,Windows Subsystem for Linux Service,VIRT,Virtualization / Subsystem
 concentr.exe,Palo Alto Networks GlobalProtect,VPN,VPN
 csc_ui.exe,Cisco Secure Client UI,VPN,VPN / ZTNA
+fcdblog.exe,Fortinet FortiClient Logging Daemon,VPN,VPN / Logging
+fortisettings.exe,Fortinet FortiClient Settings Service,VPN,VPN / Endpoint Security
+fortisslvpndaemon.exe,Fortinet FortiClient SSL VPN daemon,VPN,VPN
 fortitray.exe,Fortinet FortiClient / FortiTray,VPN,VPN / Endpoint Security
 fortivpn.exe,Fortinet FortiClient VPN,VPN,VPN
 ksde.exe,Kaspersky Secure Connection,VPN,VPN
