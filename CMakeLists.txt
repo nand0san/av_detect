@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Version (fuente unica de verdad)
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 4)
-set(VERSION_PATCH 2)
+set(VERSION_MINOR 5)
+set(VERSION_PATCH 0)
 
 # Pasar version a compilador C++ y RC
 add_definitions(

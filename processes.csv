@@ -54,10 +54,14 @@ updatesrv.exe,Bitdefender Update Service,AV,AV
 vsserv.exe,Bitdefender Virus Shield,AV,AV
 windefend.exe,Microsoft Defender AV Service,AV,AV
 wscservice.exe,Trend Micro Security Service,AV,AV / EDR
+clmgrs.exe,Commvault Client Manager Service,BACKUP,Backup FS Agent
+cvfwd.exe,Commvault Firewall Tunnel,BACKUP,Backup Network Tunnel
+cvmountd.exe,Commvault MediaAgent Mount,BACKUP,Backup Media Mount
 mms.exe,Acronis Managed Machine Service,BACKUP,Backup Agent Core
 mmsmonitor.exe,Acronis Managed Machine Service Monitor,BACKUP,Backup Agent Watchdog
 schedul2.exe,Acronis Scheduler2 Service,BACKUP,Backup Scheduler
 tib_mounter_service.exe,Acronis TIB Mounter Service,BACKUP,Backup Image Mount
+veeam.endpoint.service.exe,Veeam Agent for Windows Service,BACKUP,Backup Agent
 applephotostreams.exe,Apple Photo Streams,CLOUD,Cloud Sync / iCloud
 apsdaemon.exe,Apple iCloud Push Daemon,CLOUD,Cloud Sync / iCloud
 box.exe,Box Desktop,CLOUD,Cloud Sync / Box

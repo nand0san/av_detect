@@ -3,22 +3,22 @@
 
 Detects whether security software (AV, EDR/XDR, firewall, VPN/ZTNA, DLP, telemetry, etc.) is running on a Windows endpoint by enumerating live processes and matching them against a curated catalog of known agent executables.
 
-- **Version:** `v2.4.2`
+- **Version:** `v2.5.0`
 - **Scope:** Image-name-based detection; **no admin required**; low-noise (does **not** request `SeDebugPrivilege`).
 - **Use cases:** DFIR triage, Red Team reconnaissance, asset inventory, SOC enrichment.
 
 
 
-## WHAT'S NEW IN V2.4.0
+## WHAT'S NEW IN V2.5.0
 
-- **Acronis Cyber Protect coverage** (273 entries, +7 over v2.3.0)
-  - Security modules tagged `EDR`: Cyber Protect Service, Agent Core, Active Protection
-  - Backup engine tagged `BACKUP`: Managed Machine Service (+ monitor), Scheduler2, TIB Mounter
-- **New `BACKUP` tag**
-  - Backup agents are reported separately from `EDR` because they also ship in
-    backup-only products (Acronis True Image, Cyber Backup). Seeing them does
-    **not** imply an EDR is deployed, and tagging them `EDR` would overstate
-    endpoint protection during triage and recon.
+- **Backup agent coverage beyond Acronis** (277 entries, +4 over v2.4.2)
+  - Commvault: Client Manager Service (`clmgrs.exe`), Firewall Tunnel (`cvfwd.exe`), MediaAgent Mount (`cvmountd.exe`)
+  - Veeam: Agent for Windows Service (`veeam.endpoint.service.exe`)
+  - All tagged `BACKUP`; names taken from vendor service documentation
+- **The `BACKUP` tag** keeps backup engines separate from `EDR`: these services
+  also ship in backup-only products, so seeing them does **not** imply an EDR is
+  deployed, and tagging them `EDR` would overstate endpoint protection during
+  triage and recon.
 
 
 
@@ -103,7 +103,7 @@ cmake --build build --config Release
 ## EXAMPLE OUTPUT
 
 ```
-AV_detect Version: v2.4.2
+AV_detect Version: v2.5.0
 
 [unknown] Unknown or noteworthy processes (N):
 - someproc.exe | cmd=C:\Path\To\someproc.exe --arg1 --arg2 ...
@@ -261,6 +261,7 @@ processes that start or stop between runs (including the shell running the query
 - Microsoft Defender, MDE, Sysmon
 - CrowdStrike Falcon, SentinelOne, Cortex XDR, Elastic Agent
 - Acronis Cyber Protect (security modules + backup engine)
+- Commvault, Veeam Agent (backup agents, tagged `BACKUP`)
 - Trend Micro, McAfee/Trellix, Sophos, ESET, Bitdefender, Avast/Avira/Panda/Webroot
 - Zscaler, Fortinet, GlobalProtect, AnyConnect, OpenVPN, WireGuard
 - Tanium, Rapid7 Insight Agent, Qualys Cloud Agent
@@ -274,6 +275,12 @@ processes that start or stop between runs (including the shell running the query
 - OEM/DRM/GPU/USB/TB/NAS auxiliary services
 
 ## CHANGELOG
+
+### V2.5.0
+
+- Catalog expanded to 277 entries (+4): backup agents beyond Acronis
+- Commvault (`clmgrs.exe`, `cvfwd.exe`, `cvmountd.exe`) and Veeam Agent for Windows (`veeam.endpoint.service.exe`), all tagged `BACKUP`
+- Names sourced from vendor service documentation; no behavior or output-format change
 
 ### V2.4.2
 

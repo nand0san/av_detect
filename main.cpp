@@ -1,4 +1,4 @@
-// av_detect.cpp -- v2.4.2
+// av_detect.cpp -- v2.5.0
 //
 // Security Software Detector (Windows)
 // -----------------------------------
@@ -39,7 +39,7 @@
 #define _VS(a,b,c)  _VS2(a,b,c)
 #define VERSION _VS(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 #else
-#define VERSION "v2.4.2"
+#define VERSION "v2.5.0"
 #endif
 #endif
 
@@ -684,6 +684,15 @@ static const std::unordered_map<std::string, std::vector<SecuritySoftware>>& cat
             {"mmsmonitor.exe",   { {"Acronis Managed Machine Service Monitor","Backup Agent Watchdog","BACKUP"} }},
             {"schedul2.exe",     { {"Acronis Scheduler2 Service","Backup Scheduler","BACKUP"} }},
             {"tib_mounter_service.exe",{ {"Acronis TIB Mounter Service","Backup Image Mount","BACKUP"} }},
+
+            // Commvault -- backup/recovery agent. Names from vendor docs
+            // (documentation.commvault.com, Descriptions of Services).
+            {"clmgrs.exe",       { {"Commvault Client Manager Service","Backup FS Agent","BACKUP"} }},
+            {"cvfwd.exe",        { {"Commvault Firewall Tunnel","Backup Network Tunnel","BACKUP"} }},
+            {"cvmountd.exe",     { {"Commvault MediaAgent Mount","Backup Media Mount","BACKUP"} }},
+
+            // Veeam -- endpoint backup agent (Veeam Agent for Windows).
+            {"veeam.endpoint.service.exe",{ {"Veeam Agent for Windows Service","Backup Agent","BACKUP"} }},
 
             // Tanium / Rapid7 / Qualys
             {"taniumclient.exe", { {"Tanium Client","EDR / Asset / IR","EDR"} }},
